@@ -46,13 +46,37 @@ namespace mtrx
 
             for (const auto& row : init)
                 if (row.size() != num_cols_)
-                    assert (0 && "Matrix must be square");
+                    assert (0 && "Rows sizes must be equal to num collons");
 
             data_ = new T[num_cols_ * num_rows_];
             size_t index = 0;
             for (const auto& row : init)
                 for (const auto& elem : row)
                     data_[index++] = elem;
+        }
+
+        template <typename It>
+        Matrix(size_t cols, size_t rows, It start, It fin)
+             : data_(nullptr),
+               num_cols_(cols),
+               num_rows_(rows)
+        {
+            if (cols == 0 || rows == 0)
+                assert (0 && "Matrix cannot be empty");
+
+            data_ = new T[num_cols_ * num_rows_];
+
+            It curr = start;
+            size_t i = 0;
+
+            for (; i < num_cols_ * num_rows_ && curr != fin; ++i, ++curr)
+                data_[i] = *curr;
+
+            if (i != num_cols_ * num_rows_ || curr != fin)
+            {
+                delete[] data_;
+                assert (0 && "Iterator range size doesnt match matrix dimensions");
+            }
         }
 
         Matrix(const Matrix& other) : data_(nullptr)
