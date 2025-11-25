@@ -9,48 +9,67 @@ namespace mtrx
     class Matrix
     {
     private:
-        T* data;
-        int num_cols;
-        int num_rows;
+        T* data_;
+        size_t num_cols_;
+        size_t num_rows_;
 
         void copy_matrix (const Matrix& other)
         {
-            num_cols = other.num_cols;
-            num_rows = other.num_rows;
+            num_cols_ = other.num_cols_;
+            num_rows_ = other.num_rows_;
 
-            data = new T[num_cols * num_rows];
-            std::copy (other.data, other.data + (num_cols * num_rows), data);
+            data_ = new T[num_cols_ * num_rows_];
+            std::copy (other.data_, other.data_ + (num_cols_ * num_rows_), data_);
         }
 
     public:
-        Matrix(int cols, int rows, const T& val = T{})
-            : data(nullptr),
-              num_cols(cols),
-              num_rows(rows)
+        Matrix(size_t cols, size_t rows, const T& val = T{})
+             : data_(nullptr),
+               num_cols_(cols),
+               num_rows_(rows)
         {
-            if (cols <= 0 || rows <= 0)
+            if (cols == 0 || rows == 0)
                 assert (0 && "Matrix dimensions must be positive");
 
-            data = new T [num_cols * num_rows];
+            data_ = new T[num_cols_ * num_rows_];
 
-            std::fill (data, data + (num_cols * num_rows), val);
+            std::fill (data_, data_ + (num_cols_ * num_rows_), val);
         }
 
-        Matrix(const Matrix& other) : data(nullptr)
+        Matrix(std::initializer_list<std::initializer_list<T>> init)
+                : data_(nullptr),
+                  num_cols_(init.size() > 0 ? init.begin()->size() : 0),
+                  num_rows_(init.size())
+        {
+            if (num_rows_ == 0 || num_cols_ == 0)
+                assert (0 && "Matrix cannot be empty");
+
+            for (const auto& row : init)
+                if (row.size() != num_cols_)
+                    assert (0 && "Matrix must be square");
+
+            data_ = new T[num_cols_ * num_rows_];
+            size_t index = 0;
+            for (const auto& row : init)
+                for (const auto& elem : row)
+                    data_[index++] = elem;
+        }
+
+        Matrix(const Matrix& other) : data_(nullptr)
         {
             copy_matrix (other);
         }
 
         Matrix(Matrix&& other) noexcept
-              : data(other.data),
-                num_cols(other.num_cols),
-                num_rows(other.num_rows) { other.data = nullptr; }
+              : data_(other.data_),
+                num_cols_(other.num_cols_),
+                num_rows_(other.num_rows_) { other.data_ = nullptr; }
 
         Matrix& operator= (const Matrix& other)
         {
             if (this != &other)
             {
-                delete[] data;
+                delete[] data_;
                 copy_matrix (other);
             }
 
@@ -61,34 +80,34 @@ namespace mtrx
         {
             if (this != &other)
             {
-                delete[] data;
-                data = other.data;
-                num_cols = other.num_cols;
-                num_rows = other.num_rows;
+                delete[] data_;
+                data_ = other.data_;
+                num_cols_ = other.num_cols_;
+                num_rows_ = other.num_rows_;
 
-                other.data = nullptr;
+                other.data_ = nullptr;
             }
             return *this;
         }
 
         ~Matrix()
         {
-            delete[] data;
+            delete[] data_;
         }
 
-        int ncols() const { return num_cols; }
-        int nrows() const { return num_rows; }
+        int ncols() const { return num_cols_; }
+        int nrows() const { return num_rows_; }
 
-        bool is_valid() const { return data != nullptr &&
-                                       num_cols > 0    &&
-                                       num_rows > 0; }
+        bool is_valid() const { return data_ != nullptr &&
+                                       num_cols_ > 0    &&
+                                       num_rows_ > 0; }
 
         void dump() const
         {
-            for (int i = 0; i < num_rows; ++i)
+            for (size_t i = 0; i < num_rows_; ++i)
             {
-                for (int j = 0; j < num_cols; ++j)
-                    std::cout << data[i * num_cols + j] << " ";
+                for (size_t j = 0; j < num_cols_; ++j)
+                    std::cout << data_[i * num_cols_ + j] << " ";
 
                 std::cout << std::endl;
             }
