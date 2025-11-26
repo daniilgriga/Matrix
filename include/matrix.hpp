@@ -177,7 +177,7 @@ namespace mtrx
             delete[] data_;
         }
 
-        // basic methods //
+        //=# METHODS #=//
 
         int ncols() const { return num_cols_; }
         int nrows() const { return num_rows_; }
@@ -219,5 +219,33 @@ namespace mtrx
 
             return *this;
         }
+
+        bool equal (const Matrix& other)
+        {
+            if (num_rows_ != other.num_rows_ ||
+                num_cols_ != other.num_cols_   )
+                return false;
+
+            return std::equal (data_,
+                               data_ + num_rows_ * num_cols_,
+                               other.data_);
+        }
+
+        bool is_square() const
+        { return (num_rows_ == num_cols_); }
+
+        T trace() const
+        {
+            if (!is_square())
+                assert (0 && "Trace can be find only for square matrix");
+
+            T sum{};
+
+            for (size_t i = 0; i < num_rows_; ++i)
+                sum += (*this)[i][i];
+
+            return sum;
+        }
+
     };
 }
