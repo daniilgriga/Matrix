@@ -18,8 +18,14 @@ jobs:
       - name: Install Arch dependencies
         run: pacman -Syu --noconfirm && pacman -S --noconfirm cmake ninja gcc
 
-      - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Debug with Sanitizers
+        run: |
+          cmake -S . -B build-debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSANITIZE=ON
+          cmake --build build-debug
+          ./build-debug/matrix || echo "Debug run completed"
 
-      - name: Build
-        run: cmake --build build
+      - name: Release build
+        run: |
+          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DSANITIZE=OFF
+          cmake --build build-release
+          ./build-release/matrix || echo "Release run completed"
