@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  arch-linux-test:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Arch dependencies
+        run: pacman -Syu --noconfirm && pacman -S --noconfirm cmake ninja gcc
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
