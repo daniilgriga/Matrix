@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cassert>
 #include <iomanip>
+#include <limits>
 
 namespace mtrx
 {
@@ -252,6 +253,57 @@ namespace mtrx
                 sum += (*this)[i][i];
 
             return sum;
+        }
+
+        T det() const
+        {
+            if (!is_square())
+                assert (0 && "Determinant can be find only for square matrix");
+
+            Matrix copy(*this);
+            T det{1};
+
+            const size_t nr = num_rows_;
+
+            for (size_t i = 0; i < nr; ++i)
+            {
+                size_t max_r = i;
+                auto max_data = std::abs (copy[i][i]);
+
+                for (size_t j = i + 1; j < nr; ++j)
+                {
+                    auto abs_data = std::abs (copy[j][i]);
+                    if (abs_data > max_data)
+                    {
+                        max_r = j;
+                        max_data = abs_data;
+                    }
+                }
+
+                if (max_data < std::numeric_limits<T>::epsilon())
+                    return T{0};
+
+                if (max_r != i)
+                {
+                    for (size_t j = 0; j < nr; ++j)
+                        std::swap (copy[i][j], copy[max_r][j]);
+
+                    det = -det;
+                }
+
+                const T elem = copy[i][i];
+                det *= elem;
+
+                for (size_t j = i + 1; j < nr; ++j)
+                {
+                    const T coeff = copy[j][i] / elem;
+
+                    for (size_t k = i + 1; k < nr; ++k)
+                        copy[j][k] -= copy[i][k] * coeff;
+                }
+            }
+
+            return det;
         }
     };
 }
