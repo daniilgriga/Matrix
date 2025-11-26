@@ -255,55 +255,79 @@ namespace mtrx
             return sum;
         }
 
+    private:
+        size_t find_main_row (const Matrix& mt, size_t col) const
+        {
+            size_t max_row = col;
+            auto max_data = std::abs (mt[col][col]);
+
+            for (size_t row = col + 1; row < mt.nrows(); ++row)
+            {
+                auto abs_data = std::abs (mt[row][col]);
+                if (abs_data > max_data)
+                {
+                    max_row = row;
+                    max_data = abs_data;
+                }
+            }
+
+            return max_row;
+        }
+
+        bool is_degenerate (const Matrix& mt, size_t col) const
+        {
+            return std::abs (mt[col][col]) < std::numeric_limits<T>::epsilon();
+        }
+
+        void swap_rows (Matrix& mt, size_t r1, size_t r2) const
+        {
+            for (size_t col = 0; col < mt.ncols(); ++col)
+                std::swap (mt[r1][col], mt[r2][col]);
+        }
+
+        const T make_zeros_under_main_row (Matrix& mt, size_t main_row) const
+        {
+            const T main = mt[main_row][main_row];
+
+            for (size_t row = main_row + 1; row < mt.nrows(); ++row)
+            {
+                const T coeff = mt[row][main_row] / main;
+
+                for (size_t col = main_row + 1; col < mt.ncols(); ++col)
+                    mt[row][col] -= mt[main_row][col] * coeff;
+            }
+
+            return main;
+        }
+
+    public:
         T det() const
         {
             if (!is_square())
                 assert (0 && "Determinant can be find only for square matrix");
 
-            Matrix copy(*this);
+            Matrix copy_mt(*this);
             T det{1};
 
-            const size_t nr = num_rows_;
+            size_t sign_count = 0;
 
-            for (size_t i = 0; i < nr; ++i)
+            for (size_t row = 0; row < num_rows_; ++row)
             {
-                size_t max_r = i;
-                auto max_data = std::abs (copy[i][i]);
+                size_t main_row = find_main_row (copy_mt, row);
 
-                for (size_t j = i + 1; j < nr; ++j)
-                {
-                    auto abs_data = std::abs (copy[j][i]);
-                    if (abs_data > max_data)
-                    {
-                        max_r = j;
-                        max_data = abs_data;
-                    }
-                }
-
-                if (max_data < std::numeric_limits<T>::epsilon())
+                if (is_degenerate (copy_mt, main_row))
                     return T{0};
 
-                if (max_r != i)
+                if (row != main_row)
                 {
-                    for (size_t j = 0; j < nr; ++j)
-                        std::swap (copy[i][j], copy[max_r][j]);
-
-                    det = -det;
+                    swap_rows (copy_mt, row, main_row);
+                    ++sign_count;
                 }
 
-                const T elem = copy[i][i];
-                det *= elem;
-
-                for (size_t j = i + 1; j < nr; ++j)
-                {
-                    const T coeff = copy[j][i] / elem;
-
-                    for (size_t k = i + 1; k < nr; ++k)
-                        copy[j][k] -= copy[i][k] * coeff;
-                }
+                det *= make_zeros_under_main_row (copy_mt, row);
             }
 
-            return det;
+            return (sign_count % 2 == 0) ? det : -det;
         }
     };
 }
