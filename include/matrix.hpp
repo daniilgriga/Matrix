@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <iomanip>
 
 namespace mtrx
 {
@@ -22,7 +23,64 @@ namespace mtrx
             std::copy (other.data_, other.data_ + (num_cols_ * num_rows_), data_);
         }
 
+        static void check_column_bounds (size_t col, size_t row_size)
+        {
+            if (col >= row_size)
+                assert (0 && "Column index out of range");
+        }
+
+        struct ProxyRow
+        {
+            T* row_;
+            size_t row_size_;
+
+            ProxyRow(T* r_ptr, size_t r_size) : row_(r_ptr), row_size_(r_size) {}
+
+            const T& operator[](size_t c) const
+            {
+                check_column_bounds (c, row_size_);
+                return row_[c];
+            }
+
+            T& operator[](size_t c)
+            {
+                check_column_bounds (c, row_size_);
+                return row_[c];
+            }
+        };
+
+        struct constProxyRow
+        {
+            const T* row_;
+            size_t row_size_;
+
+            constProxyRow(const T* r_ptr, size_t r_size) : row_(r_ptr), row_size_(r_size) {}
+
+            const T& operator[](size_t c) const
+            {
+                check_column_bounds (c, row_size_);
+                return row_[c];
+            }
+        };
+
     public:
+
+        ProxyRow operator[](size_t r)
+        {
+            if (r >= num_rows_)
+                assert (0 && "Row index out of range");
+
+            return ProxyRow (data_ + r * num_cols_, num_cols_);
+        }
+
+        constProxyRow operator[](size_t r) const
+        {
+            if (r >= num_rows_)
+                assert (0 && "Row index out of range");
+
+            return constProxyRow (data_ + r * num_cols_, num_cols_);
+        }
+
         Matrix(size_t cols, size_t rows, const T& val = T{})
              : data_(nullptr),
                num_cols_(cols),
@@ -46,7 +104,7 @@ namespace mtrx
 
             for (const auto& row : init)
                 if (row.size() != num_cols_)
-                    assert (0 && "Rows sizes must be equal to num collons");
+                    assert (0 && "Rows sizes must be equal to num columns");
 
             data_ = new T[num_cols_ * num_rows_];
             size_t index = 0;
@@ -131,7 +189,7 @@ namespace mtrx
             for (size_t i = 0; i < num_rows_; ++i)
             {
                 for (size_t j = 0; j < num_cols_; ++j)
-                    std::cout << data_[i * num_cols_ + j] << " ";
+                    std::cout << std::setw(5) << data_[i * num_cols_ + j] << " ";
 
                 std::cout << std::endl;
             }
