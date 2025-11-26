@@ -177,6 +177,8 @@ namespace mtrx
             delete[] data_;
         }
 
+        // basic methods //
+
         int ncols() const { return num_cols_; }
         int nrows() const { return num_rows_; }
 
@@ -189,10 +191,33 @@ namespace mtrx
             for (size_t i = 0; i < num_rows_; ++i)
             {
                 for (size_t j = 0; j < num_cols_; ++j)
-                    std::cout << std::setw(5) << data_[i * num_cols_ + j] << " ";
+                    std::cout << std::setw(4) << data_[i * num_cols_ + j] << " ";
 
                 std::cout << std::endl;
             }
+        }
+
+        Matrix& negate() &
+        {
+            for (size_t i = 0; i < num_rows_ * num_cols_; ++i)
+                data_[i] = -data_[i];
+
+            return *this;
+        }
+
+        Matrix& transpose() &
+        {
+            T* new_data = new T[num_cols_ * num_rows_];
+
+            for (size_t i = 0; i < num_rows_; ++i)
+                for (size_t j = 0; j < num_cols_; ++j)
+                    new_data[j * num_rows_ + i] = data_[i * num_cols_ + j];
+
+            std::swap (num_rows_, num_cols_);
+            delete[] data_;
+            data_ = new_data;
+
+            return *this;
         }
     };
 }
