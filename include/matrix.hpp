@@ -49,12 +49,12 @@ namespace mtrx
             }
         };
 
-        struct constProxyRow
+        struct ConstProxyRow
         {
             const T* row_;
             size_t row_size_;
 
-            constProxyRow(const T* r_ptr, size_t r_size) : row_(r_ptr), row_size_(r_size) {}
+            ConstProxyRow(const T* r_ptr, size_t r_size) : row_(r_ptr), row_size_(r_size) {}
 
             const T& operator[](size_t c) const
             {
@@ -73,12 +73,12 @@ namespace mtrx
             return ProxyRow (data_ + r * num_cols_, num_cols_);
         }
 
-        constProxyRow operator[](size_t r) const
+        ConstProxyRow operator[](size_t r) const
         {
             if (r >= num_rows_)
                 assert (0 && "Row index out of range");
 
-            return constProxyRow (data_ + r * num_cols_, num_cols_);
+            return ConstProxyRow (data_ + r * num_cols_, num_cols_);
         }
 
         Matrix(size_t cols, size_t rows, const T& val = T{})
@@ -177,10 +177,10 @@ namespace mtrx
             delete[] data_;
         }
 
-        //=# METHODS #=//
+        //====== METHODS ======//
 
-        int ncols() const { return num_cols_; }
-        int nrows() const { return num_rows_; }
+        size_t ncols() const { return num_cols_; }
+        size_t nrows() const { return num_rows_; }
 
         bool is_valid() const { return data_ != nullptr &&
                                        num_cols_ > 0    &&
@@ -191,7 +191,7 @@ namespace mtrx
             for (size_t i = 0; i < num_rows_; ++i)
             {
                 for (size_t j = 0; j < num_cols_; ++j)
-                    std::cout << std::setw(4) << data_[i * num_cols_ + j] << " ";
+                    std::cout << std::setw(4) << (*this)[i][j] << " ";
 
                 std::cout << std::endl;
             }
@@ -207,20 +207,27 @@ namespace mtrx
 
         Matrix& transpose() &
         {
-            T* new_data = new T[num_cols_ * num_rows_];
+            if (is_square())
+            {
+                for (size_t i = 0; i < num_rows_; ++i)
+                    for (size_t j = i + 1; j < num_cols_; ++j)
+                        std::swap ((*this)[i][j], (*this)[j][i]);
+            }
+            else
+            {
+                Matrix transposed{num_cols_, num_rows_};
 
-            for (size_t i = 0; i < num_rows_; ++i)
-                for (size_t j = 0; j < num_cols_; ++j)
-                    new_data[j * num_rows_ + i] = data_[i * num_cols_ + j];
+                for (size_t i = 0; i < num_rows_; ++i)
+                    for (size_t j = 0; j < num_cols_; ++j)
+                        transposed[j][i] = (*this)[i][j];
 
-            std::swap (num_rows_, num_cols_);
-            delete[] data_;
-            data_ = new_data;
+                std::swap (*this, transposed);
+            }
 
             return *this;
         }
 
-        bool equal (const Matrix& other)
+        bool equal (const Matrix& other) const
         {
             if (num_rows_ != other.num_rows_ ||
                 num_cols_ != other.num_cols_   )
@@ -246,6 +253,5 @@ namespace mtrx
 
             return sum;
         }
-
     };
 }
