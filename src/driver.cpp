@@ -1,10 +1,8 @@
-#include "matrix.hpp"
+#include "processor.hpp"
 
 int main ()
 {
-    mtrx::Matrix<int> matrix = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
-
-    matrix.dump();
+    proc::process_det();
 
     return 0;
 }
