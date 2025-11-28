@@ -26,3 +26,14 @@ else()
     )
 endif()
 
+enable_testing()
+
+add_executable (matrix_tests tests/gtests.cpp)
+target_include_directories (matrix_tests PRIVATE include)
+target_compile_options (matrix_tests PRIVATE ${COMMON_COMPILE_OPTIONS})
+
+find_package (GTest REQUIRED)
+target_link_libraries (matrix_tests PRIVATE GTest::gtest GTest::gtest_main)
+
+include (GoogleTest)
+gtest_discover_tests (matrix_tests)
