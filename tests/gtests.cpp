@@ -83,9 +83,9 @@ TEST (CalcDetTest, TwoByTwoMatrix)
 
 TEST (CalcDetTest, ThreeByThreeMatrix)
 {
-    std::string data = "3 7  1  1"
-                        " 19 6  5"
-                        " 2  11 3";
+    std::string data = "3  7   1  1"
+                        " 19   6  5"
+                        "  2  11  3";
 
     double det = calc_det_helper (data);
     EXPECT_DOUBLE_EQ (-109.0, det);
@@ -93,10 +93,10 @@ TEST (CalcDetTest, ThreeByThreeMatrix)
 
 TEST (CalcDetTest, FourByFourMatrix)
 {
-    std::string data = "4 2  1  7 3"
-                        " 12 11 8 6"
-                        " 3  9  1 5"
-                        " 6  5  1 12";
+    std::string data = "4  2  1  7  3"
+                        " 12 11  8  6"
+                        "  3  9  1  5"
+                        "  6  5  1 12";
 
     double det = calc_det_helper (data);
     EXPECT_DOUBLE_EQ (4421.0, det);
@@ -105,10 +105,10 @@ TEST (CalcDetTest, FourByFourMatrix)
 TEST (CalcDetTest, FiveByFiveMatrix)
 {
     std::string data = "5 4  13 -11 3  3"
-                        " 3  4   3  4 16"
-                        " 3  6   7  6  7"
-                        " -9 5   3  1  9"
-                        " 2  5   6  8 -3";
+                        " 3   4   3 4 16"
+                        " 3   6   7 6  7"
+                        " -9  5   3 1  9"
+                        " 2   5   6 8 -3";
 
     double det = calc_det_helper (data);
     EXPECT_DOUBLE_EQ (73445.0, det);
@@ -116,12 +116,12 @@ TEST (CalcDetTest, FiveByFiveMatrix)
 
 TEST (CalcDetTest, SixBySixMatrix)
 {
-    std::string data = "6 4  3  -12 4  3 -2"
-                        " 3  7   3  4 16 -2"
-                        " 3  6   7  7  7 -6"
-                        " -9 7   1  1  9  3"
-                        " 9  3   6  5 -3 -9"
-                        " -9 -2 -4  9 11  2";
+    std::string data = "6  4  3 -12  4  3 -2"
+                        "  3  7   3  4 16 -2"
+                        "  3  6   7  7  7 -6"
+                        " -9  7   1  1  9  3"
+                        "  9  3   6  5 -3 -9"
+                        " -9 -2  -4  9 11  2";
 
     double det = calc_det_helper (data);
     EXPECT_DOUBLE_EQ (106614.0, det);
@@ -139,4 +139,62 @@ TEST (CalcDetTest, SevenBySevenMatrix)
 
     double det = calc_det_helper (data);
     EXPECT_DOUBLE_EQ (-2784800.0, det);
+}
+
+TEST (CalcDetTest, AllProportionalRowsInFourRowsMatrix)
+{
+    std::string data = "4 4   2    2    6 "
+                        " 2   1    1    3 "
+                        " 1  0.5  0.5  1.5"
+                        " 6   3    3    9";
+
+    double det = calc_det_helper (data);
+    EXPECT_DOUBLE_EQ (0.0, det);
+}
+
+TEST (CalcDetTest, TwoProportionalRowsOutOfFourMatrix)
+{
+    std::string data = "4 4 2 2 6"
+                        " 2 1 1 3"
+                        " 1 3 5 5"
+                        " 1 2 7 0";
+
+    double det = calc_det_helper (data);
+    EXPECT_DOUBLE_EQ (0.0, det);
+}
+
+TEST (CalcDetTest, AllDuplicateRowsInFiveRowsMatrix)
+{
+    std::string data = "5 11 11 11 11 11"
+                        " 11 11 11 11 11"
+                        " 11 11 11 11 11"
+                        " 11 11 11 11 11"
+                        " 11 11 11 11 11";
+
+    double det = calc_det_helper (data);
+    EXPECT_DOUBLE_EQ (0.0, det);
+}
+
+TEST (CalcDetTest, TwoDuplicateRowsOutOfFiveMatrix)
+{
+    std::string data = "5 11 11 11 11 11"
+                        " 11 11 11 11 11"
+                        " 12 13 14 15 16"
+                        " 21 20 19 18 17"
+                        " 30 30 30 30 30";
+
+    double det = calc_det_helper (data);
+    EXPECT_DOUBLE_EQ (0.0, det);
+}
+
+TEST (CalcDetTest, OneZeroRowOutOfFiveMatrix)
+{
+    std::string data = "5  6  2  2  5  9"
+                        "  6  7  8  9 10"
+                        "  0  0  0  0  0"
+                        " 11 12 12 14 16"
+                        " 16 12 13 11  9";
+
+    double det = calc_det_helper (data);
+    EXPECT_DOUBLE_EQ (0.0, det);
 }
