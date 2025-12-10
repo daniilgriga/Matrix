@@ -15,7 +15,7 @@ cd Matrix/
 
 ```bash
 # Debug version:
-cmake -S . -B build-debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSANITIZE=ON -DBUILD_TESTS=OFF
+cmake -S . -B build-debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSANITIZE=ON
 cmake --build build-debug
 
 # Release version:

@@ -315,14 +315,14 @@ namespace mtrx
             {
                 size_t main_row = find_main_row (copy_mt, row);
 
-                if (is_degenerate (copy_mt, main_row))
-                    return T{0};
-
                 if (row != main_row)
                 {
                     swap_rows (copy_mt, row, main_row);
                     ++sign_count;
                 }
+
+                if (is_degenerate (copy_mt, row))
+                return T{0};
 
                 det *= make_zeros_under_main_row (copy_mt, row);
             }
