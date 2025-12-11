@@ -11,6 +11,31 @@ namespace mtrx
     class Matrix
     {
     private:
+        class MemoryGuard
+        {
+            T* ptr_;
+
+        public:
+            explicit MemoryGuard(size_t size) : ptr_(new T[size]) {}
+
+            ~MemoryGuard() { delete[] ptr_; }
+
+            T* get() const { return ptr_; }
+
+            // transfers ownership to caller and returns pointer
+            // after release guard no longer manages the memory
+            T* release()
+            {
+                T* temp = ptr_;
+                ptr_ = nullptr;
+
+                return temp;
+            }
+
+            MemoryGuard(const MemoryGuard&) = delete;
+            MemoryGuard& operator= (const MemoryGuard&) = delete;
+        };
+
         T* data_;
         size_t num_cols_;
         size_t num_rows_;
@@ -90,9 +115,11 @@ namespace mtrx
             if (cols == 0 || rows == 0)
                 assert (0 && "Matrix dimensions must be positive");
 
-            data_ = new T[num_cols_ * num_rows_];
+            MemoryGuard guard(num_cols_ * num_rows_);
 
-            std::fill (data_, data_ + (num_cols_ * num_rows_), val);
+            std::fill (guard.get(), guard.get() + (num_cols_ * num_rows_), val);
+
+            data_ = guard.release();
         }
 
         Matrix(std::initializer_list<std::initializer_list<T>> init)
@@ -107,11 +134,14 @@ namespace mtrx
                 if (row.size() != num_cols_)
                     assert (0 && "Rows sizes must be equal to num columns");
 
-            data_ = new T[num_cols_ * num_rows_];
+            MemoryGuard guard(num_cols_ * num_rows_);
+
             size_t index = 0;
             for (const auto& row : init)
                 for (const auto& elem : row)
-                    data_[index++] = elem;
+                    guard.get()[index++] = elem;
+
+            data_ = guard.release();
         }
 
         template <typename It>
@@ -123,19 +153,18 @@ namespace mtrx
             if (cols == 0 || rows == 0)
                 assert (0 && "Matrix cannot be empty");
 
-            data_ = new T[num_cols_ * num_rows_];
+            MemoryGuard guard(num_cols_ * num_rows_);
 
             It curr = start;
             size_t i = 0;
 
             for (; i < num_cols_ * num_rows_ && curr != fin; ++i, ++curr)
-                data_[i] = *curr;
+                guard.get()[i] = *curr;
 
             if (i != num_cols_ * num_rows_ || curr != fin)
-            {
-                delete[] data_;
-                assert (0 && "Iterator range size doesnt match matrix dimensions");
-            }
+                throw std::invalid_argument("Iterator range size doesnt match matrix dimensions");
+
+            data_ = guard.release();
         }
 
         Matrix(const Matrix& other) : data_(nullptr)
