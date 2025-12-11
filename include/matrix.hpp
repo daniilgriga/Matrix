@@ -45,8 +45,11 @@ namespace mtrx
             num_cols_ = other.num_cols_;
             num_rows_ = other.num_rows_;
 
-            data_ = new T[num_cols_ * num_rows_];
-            std::copy (other.data_, other.data_ + (num_cols_ * num_rows_), data_);
+            MemoryGuard guard(num_cols_ * num_rows_);
+
+            std::copy (other.data_, other.data_ + (num_cols_ * num_rows_), guard.get());
+
+            data_ = guard.release();
         }
 
         static void check_column_bounds (size_t col, size_t row_size)
@@ -181,8 +184,11 @@ namespace mtrx
         {
             if (this != &other)
             {
-                delete[] data_;
-                copy_matrix (other);
+                Matrix temp(other);
+
+                std::swap (data_, temp.data_);
+                std::swap (num_cols_, temp.num_cols_);
+                std::swap (num_rows_, temp.num_rows_);
             }
 
             return *this;
