@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Arch dependencies
-        run: pacman -Syu --noconfirm && pacman -S --noconfirm cmake ninja gcc
+        run: pacman -Syu --noconfirm && pacman -S --noconfirm cmake ninja gcc gtest
 
       - name: Debug with Sanitizers
         run: |
