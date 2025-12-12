@@ -30,7 +30,7 @@ endif()
 if(BUILD_TESTS)
     enable_testing()
 
-    add_executable (matrix_tests tests/gtests.cpp)
+    add_executable (matrix_tests tests/unit/unit_tests.cpp)
     target_include_directories (matrix_tests PRIVATE include)
     target_compile_options (matrix_tests PRIVATE ${COMMON_COMPILE_OPTIONS})
 

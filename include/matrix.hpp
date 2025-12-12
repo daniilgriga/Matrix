@@ -215,8 +215,8 @@ namespace mtrx
 
         //====== METHODS ======//
 
-        size_t ncols() const { return num_cols_; }
-        size_t nrows() const { return num_rows_; }
+        size_t ncols() const noexcept { return num_cols_; }
+        size_t nrows() const noexcept { return num_rows_; }
 
         bool is_valid() const { return data_ != nullptr &&
                                        num_cols_ > 0    &&
@@ -251,7 +251,7 @@ namespace mtrx
             }
             else
             {
-                Matrix transposed{num_cols_, num_rows_};
+                Matrix transposed{num_rows_, num_cols_};
 
                 for (size_t i = 0; i < num_rows_; ++i)
                     for (size_t j = 0; j < num_cols_; ++j)
@@ -274,7 +274,7 @@ namespace mtrx
                                other.data_);
         }
 
-        bool is_square() const
+        bool is_square() const noexcept
         { return (num_rows_ == num_cols_); }
 
         T trace() const
