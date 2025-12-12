@@ -15,12 +15,12 @@ cd Matrix/
 
 ```bash
 # Debug version:
-cmake -S . -B build-debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSANITIZE=ON
-cmake --build build-debug
+cmake -S . -B build/debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSANITIZE=ON
+cmake --build build/debug
 
 # Release version:
-cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DSANITIZE=OFF -DBUILD_TESTS=OFF
-cmake --build build-release
+cmake -S . -B build/release -G Ninja -DCMAKE_BUILD_TYPE=Release -DSANITIZE=OFF -DBUILD_TESTS=OFF
+cmake --build build/release
 ```
 
 ## How to Run
@@ -69,13 +69,13 @@ The program outputs the determinant of the matrix as a floating-point number.
 ### How to Build
 
 ```bash
-cmake -S . -B build-tests -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
-cmake --build build-tests
+cmake -S . -B build/tests -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
+cmake --build build/tests
 ```
 
 ### How to Run
 
 ```bash
-cd build-tests
+cd build/tests
 ctest --output-on-failure
 ```
