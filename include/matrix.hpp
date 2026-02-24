@@ -273,7 +273,7 @@ namespace mtrx
         }
 
     private:
-        size_t find_main_row (const Matrix& mt, size_t col) const
+        static size_t find_main_row (const Matrix& mt, size_t col)
         {
             size_t max_row = col;
             auto max_data = std::abs (mt[col][col]);
@@ -291,18 +291,18 @@ namespace mtrx
             return max_row;
         }
 
-        bool is_degenerate (const Matrix& mt, size_t col) const
+        static bool is_degenerate (const Matrix& mt, size_t col)
         {
             return std::abs (mt[col][col]) < std::numeric_limits<T>::epsilon();
         }
 
-        void swap_rows (Matrix& mt, size_t r1, size_t r2) const
+        static void swap_rows (Matrix& mt, size_t r1, size_t r2)
         {
             for (size_t col = 0; col < mt.ncols(); ++col)
                 std::swap (mt[r1][col], mt[r2][col]);
         }
 
-        const T make_zeros_under_main_row (Matrix& mt, size_t main_row) const
+        static const T make_zeros_under_main_row (Matrix& mt, size_t main_row)
         {
             const T main = mt[main_row][main_row];
 
