@@ -41,62 +41,55 @@ namespace mtrx
         size_t num_cols_;
         size_t num_rows_;
 
-        static void check_column_bounds (size_t col, size_t row_size)
-        {
-            if (col >= row_size)
-                throw std::out_of_range("Column index out of range");
-        }
-
+        template <typename U>
         struct ProxyRow
         {
-            T* row_;
+            U* row_;
             size_t row_size_;
 
-            ProxyRow(T* r_ptr, size_t r_size) : row_(r_ptr), row_size_(r_size) {}
+            ProxyRow(U* r_ptr, size_t r_size) : row_(r_ptr), row_size_(r_size) {}
 
-            const T& operator[](size_t c) const
+            U& operator[](size_t c)
             {
-                check_column_bounds (c, row_size_);
-                return row_[c];
-            }
+                if (c >= row_size_)
+                    throw std::out_of_range("Column index out of range");
 
-            T& operator[](size_t c)
-            {
-                check_column_bounds (c, row_size_);
-                return row_[c];
-            }
-        };
-
-        struct ConstProxyRow
-        {
-            const T* row_;
-            size_t row_size_;
-
-            ConstProxyRow(const T* r_ptr, size_t r_size) : row_(r_ptr), row_size_(r_size) {}
-
-            const T& operator[](size_t c) const
-            {
-                check_column_bounds (c, row_size_);
                 return row_[c];
             }
         };
 
     public:
 
-        ProxyRow operator[](size_t r)
+        ProxyRow<T> operator[](size_t r)
         {
             if (r >= num_rows_)
                 throw std::out_of_range("Row index out of range");
 
-            return ProxyRow (data_ + r * num_cols_, num_cols_);
+            return ProxyRow<T> (data_ + r * num_cols_, num_cols_);
         }
 
-        ConstProxyRow operator[](size_t r) const
+        ProxyRow<const T> operator[](size_t r) const
         {
             if (r >= num_rows_)
                 throw std::out_of_range("Row index out of range");
 
-            return ConstProxyRow (data_ + r * num_cols_, num_cols_);
+            return ProxyRow<const T> (data_ + r * num_cols_, num_cols_);
+        }
+
+        T& at (size_t r, size_t c)
+        {
+            if (r >= num_rows_ || c >= num_cols_)
+                throw std::out_of_range("Matrix index out of range");
+
+            return data_[r * num_cols_ + c];
+        }
+
+        const T& at (size_t r, size_t c) const
+        {
+            if (r >= num_rows_ || c >= num_cols_)
+                throw std::out_of_range("Matrix index out of range");
+
+            return data_[r * num_cols_ + c];
         }
 
         Matrix(size_t cols, size_t rows, const T& val = T{})
