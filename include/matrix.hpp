@@ -56,6 +56,14 @@ namespace mtrx
 
                 return row_[c];
             }
+
+            const U& operator[](size_t c) const
+            {
+                if (c >= row_size_)
+                    throw std::out_of_range("Column index out of range");
+
+                return row_[c];
+            }
         };
 
     public:
@@ -302,7 +310,7 @@ namespace mtrx
                 std::swap (mt[r1][col], mt[r2][col]);
         }
 
-        static const T make_zeros_under_main_row (Matrix& mt, size_t main_row)
+        static T make_zeros_under_main_row (Matrix& mt, size_t main_row)
         {
             const T main = mt[main_row][main_row];
 

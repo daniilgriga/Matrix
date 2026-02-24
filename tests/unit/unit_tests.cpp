@@ -209,6 +209,17 @@ TEST (MatrixAccessor, ConstOperatorBracket)
     EXPECT_EQ (m[1][1], 4);
 }
 
+TEST (MatrixAccessor, ConstRowProxy)
+{
+    const mtrx::Matrix<double> m = {
+        {1, 2},
+        {3, 4}
+    };
+
+    const auto row = m[0];
+    EXPECT_EQ (row[1], 2);
+}
+
 TEST (MatrixAccessor, NcolsNrows)
 {
     mtrx::Matrix<double> m (5, 3, 0);
