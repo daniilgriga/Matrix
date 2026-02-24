@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <iomanip>
 #include <limits>
+#include <utility>
 
 namespace mtrx
 {
@@ -171,9 +172,9 @@ namespace mtrx
         }
 
         Matrix(Matrix&& other) noexcept
-              : data_(other.data_),
-                num_cols_(other.num_cols_),
-                num_rows_(other.num_rows_) { other.data_ = nullptr; }
+              : data_(std::exchange(other.data_, nullptr)),
+                num_cols_(std::exchange(other.num_cols_, 0)),
+                num_rows_(std::exchange(other.num_rows_, 0)) {}
 
         Matrix& operator= (const Matrix& other)
         {
@@ -193,12 +194,9 @@ namespace mtrx
         {
             if (this != &other)
             {
-                delete[] data_;
-                data_ = other.data_;
-                num_cols_ = other.num_cols_;
-                num_rows_ = other.num_rows_;
-
-                other.data_ = nullptr;
+                std::swap (data_, other.data_);
+                std::swap (num_cols_, other.num_cols_);
+                std::swap (num_rows_, other.num_rows_);
             }
             return *this;
         }
