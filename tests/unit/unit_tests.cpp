@@ -424,3 +424,49 @@ TEST (MatrixComparison, DifferentSizes)
 
     EXPECT_FALSE (m1.equal (m2));
 }
+
+// exceptions:
+
+TEST (MatrixExceptions, ZeroCols)
+{
+    EXPECT_THROW (
+        mtrx::Matrix<double> m (0, 2),
+        std::invalid_argument );
+}
+
+TEST (MatrixExceptions, ZeroRows)
+{
+    EXPECT_THROW (
+        mtrx::Matrix<double> m (2, 0),
+        std::invalid_argument );
+}
+
+TEST (MatrixExceptions, OutOfRangeRow)
+{
+    mtrx::Matrix<double> m (2, 2, 0.0);
+    EXPECT_THROW ((void)m[2][0], std::out_of_range);
+}
+
+TEST (MatrixExceptions, OutOfRangeCol)
+{
+    mtrx::Matrix<double> m (2, 2, 0.0);
+    EXPECT_THROW ((void)m[0][2], std::out_of_range);
+}
+
+TEST (MatrixExceptions, ConstOutOfRangeRow)
+{
+    const mtrx::Matrix<double> m = {{1, 2}, {3, 4}};
+    EXPECT_THROW ((void)m[5][0], std::out_of_range);
+}
+
+TEST (MatrixExceptions, DetNonSquare)
+{
+    mtrx::Matrix<double> m = {{1, 2, 3}, {4, 5, 6}};
+    EXPECT_THROW ((void)m.det(), std::invalid_argument);
+}
+
+TEST (MatrixExceptions, TraceNonSquare)
+{
+    mtrx::Matrix<double> m = {{1, 2, 3}, {4, 5, 6}};
+    EXPECT_THROW ((void)m.trace(), std::invalid_argument);
+}
