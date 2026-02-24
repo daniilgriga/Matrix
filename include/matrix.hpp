@@ -1,7 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include <cassert>
+#include <stdexcept>
 #include <iomanip>
 #include <limits>
 
@@ -55,7 +55,7 @@ namespace mtrx
         static void check_column_bounds (size_t col, size_t row_size)
         {
             if (col >= row_size)
-                assert (0 && "Column index out of range");
+                throw std::out_of_range("Column index out of range");
         }
 
         struct ProxyRow
@@ -97,7 +97,7 @@ namespace mtrx
         ProxyRow operator[](size_t r)
         {
             if (r >= num_rows_)
-                assert (0 && "Row index out of range");
+                throw std::out_of_range("Row index out of range");
 
             return ProxyRow (data_ + r * num_cols_, num_cols_);
         }
@@ -105,7 +105,7 @@ namespace mtrx
         ConstProxyRow operator[](size_t r) const
         {
             if (r >= num_rows_)
-                assert (0 && "Row index out of range");
+                throw std::out_of_range("Row index out of range");
 
             return ConstProxyRow (data_ + r * num_cols_, num_cols_);
         }
@@ -116,7 +116,7 @@ namespace mtrx
                num_rows_(rows)
         {
             if (cols == 0 || rows == 0)
-                assert (0 && "Matrix dimensions must be positive");
+                throw std::invalid_argument("Matrix dimensions must be positive");
 
             MemoryGuard guard(num_cols_ * num_rows_);
 
@@ -131,11 +131,11 @@ namespace mtrx
                   num_rows_(init.size())
         {
             if (num_rows_ == 0 || num_cols_ == 0)
-                assert (0 && "Matrix cannot be empty");
+                throw std::invalid_argument("Matrix cannot be empty");
 
             for (const auto& row : init)
                 if (row.size() != num_cols_)
-                    assert (0 && "Rows sizes must be equal to num columns");
+                    throw std::invalid_argument("Rows sizes must be equal to num columns");
 
             MemoryGuard guard(num_cols_ * num_rows_);
 
@@ -154,7 +154,7 @@ namespace mtrx
                num_rows_(rows)
         {
             if (cols == 0 || rows == 0)
-                assert (0 && "Matrix cannot be empty");
+                throw std::invalid_argument("Matrix cannot be empty");
 
             MemoryGuard guard(num_cols_ * num_rows_);
 
@@ -280,7 +280,7 @@ namespace mtrx
         T trace() const
         {
             if (!is_square())
-                assert (0 && "Trace can be find only for square matrix");
+                throw std::invalid_argument("Trace can be found only for square matrix");
 
             T sum{};
 
@@ -339,7 +339,7 @@ namespace mtrx
         T det() const
         {
             if (!is_square())
-                assert (0 && "Determinant can be find only for square matrix");
+                throw std::invalid_argument("Determinant can be found only for square matrix");
 
             Matrix copy_mt(*this);
             T det{1};
