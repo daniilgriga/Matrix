@@ -12,27 +12,39 @@ add_executable (matrix src/driver.cpp)
 target_include_directories (matrix PRIVATE include)
 
 if(MSVC)
-    target_compile_options (matrix PRIVATE /W4 /WX)
+    set (COMMON_COMPILE_OPTIONS /W4 /WX)
 else()
-    target_compile_options (matrix PRIVATE
+    set (COMMON_COMPILE_OPTIONS
         -Wall
         -Wextra
         -Wpedantic
         -Werror
-        $<$<BOOL:${SANITIZE}>:-fsanitize=address,undefined>
-    )
-
-    target_link_options (matrix PRIVATE
-        $<$<BOOL:${SANITIZE}>:-fsanitize=address,undefined>
     )
 endif()
+
+if(SANITIZE AND NOT MSVC)
+    set (SANITIZE_FLAGS -fsanitize=address,undefined)
+endif()
+
+target_compile_options (matrix PRIVATE
+    ${COMMON_COMPILE_OPTIONS}
+    ${SANITIZE_FLAGS}
+)
+
+target_link_options (matrix PRIVATE ${SANITIZE_FLAGS})
 
 if(BUILD_TESTS)
     enable_testing()
 
     add_executable (matrix_tests tests/unit/unit_tests.cpp)
     target_include_directories (matrix_tests PRIVATE include)
-    target_compile_options (matrix_tests PRIVATE ${COMMON_COMPILE_OPTIONS})
+
+    target_compile_options (matrix_tests PRIVATE
+        ${COMMON_COMPILE_OPTIONS}
+        ${SANITIZE_FLAGS}
+    )
+
+    target_link_options (matrix_tests PRIVATE ${SANITIZE_FLAGS})
 
     find_package (GTest REQUIRED)
     target_link_libraries (matrix_tests PRIVATE GTest::gtest GTest::gtest_main)
