@@ -40,18 +40,6 @@ namespace mtrx
         size_t num_cols_;
         size_t num_rows_;
 
-        void copy_matrix (const Matrix& other)
-        {
-            num_cols_ = other.num_cols_;
-            num_rows_ = other.num_rows_;
-
-            MemoryGuard guard(num_cols_ * num_rows_);
-
-            std::copy (other.data_, other.data_ + (num_cols_ * num_rows_), guard.get());
-
-            data_ = guard.release();
-        }
-
         static void check_column_bounds (size_t col, size_t row_size)
         {
             if (col >= row_size)
@@ -170,9 +158,16 @@ namespace mtrx
             data_ = guard.release();
         }
 
-        Matrix(const Matrix& other) : data_(nullptr)
+        Matrix(const Matrix& other)
+              : data_(nullptr),
+                num_cols_(other.num_cols_),
+                num_rows_(other.num_rows_)
         {
-            copy_matrix (other);
+            MemoryGuard guard(num_cols_ * num_rows_);
+
+            std::copy (other.data_, other.data_ + (num_cols_ * num_rows_), guard.get());
+
+            data_ = guard.release();
         }
 
         Matrix(Matrix&& other) noexcept
