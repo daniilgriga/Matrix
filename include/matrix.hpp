@@ -211,10 +211,6 @@ namespace mtrx
         size_t ncols() const noexcept { return num_cols_; }
         size_t nrows() const noexcept { return num_rows_; }
 
-        bool is_valid() const { return data_ != nullptr &&
-                                       num_cols_ > 0    &&
-                                       num_rows_ > 0; }
-
         void dump() const
         {
             for (size_t i = 0; i < num_rows_; ++i)
