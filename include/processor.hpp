@@ -3,19 +3,22 @@
 #include "matrix.hpp"
 
 #include <iostream>
+#include <stdexcept>
 
 namespace proc
 {
     mtrx::Matrix<double> read_matrix (std::istream& input)
     {
         size_t k = 0;
-        input >> k;
+        if (!(input >> k))
+            throw std::runtime_error("Failed to read matrix size");
 
         mtrx::Matrix<double> matrix(k, k);
 
         for (size_t i = 0; i < k; i++)
             for (size_t j = 0; j < k; j++)
-                input >> matrix[i][j];
+                if (!(input >> matrix[i][j]))
+                    throw std::runtime_error("Failed to read matrix element");
 
         return matrix;
     }
