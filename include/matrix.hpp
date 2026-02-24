@@ -252,7 +252,7 @@ namespace mtrx
             return *this;
         }
 
-        bool equal (const Matrix& other) const
+        bool operator== (const Matrix& other) const
         {
             if (num_rows_ != other.num_rows_ ||
                 num_cols_ != other.num_cols_   )

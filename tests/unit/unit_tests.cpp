@@ -392,7 +392,7 @@ TEST (MatrixComparison, EqualMatrices)
         {3, 4}
     };
 
-    EXPECT_TRUE (m1.equal (m2));
+    EXPECT_TRUE (m1 == m2);
 }
 
 TEST (MatrixComparison, DifferentMatrices)
@@ -407,7 +407,7 @@ TEST (MatrixComparison, DifferentMatrices)
         {3, 5}
     };
 
-    EXPECT_FALSE (m1.equal (m2));
+    EXPECT_FALSE (m1 == m2);
 }
 
 TEST (MatrixComparison, DifferentSizes)
@@ -422,7 +422,7 @@ TEST (MatrixComparison, DifferentSizes)
         {4, 5, 6}
     };
 
-    EXPECT_FALSE (m1.equal (m2));
+    EXPECT_FALSE (m1 == m2);
 }
 
 // exceptions:
