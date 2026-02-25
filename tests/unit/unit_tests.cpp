@@ -209,6 +209,17 @@ TEST (MatrixAccessor, ConstOperatorBracket)
     EXPECT_EQ (m[1][1], 4);
 }
 
+TEST (MatrixAccessor, ConstRowProxy)
+{
+    const mtrx::Matrix<double> m = {
+        {1, 2},
+        {3, 4}
+    };
+
+    const auto row = m[0];
+    EXPECT_EQ (row[1], 2);
+}
+
 TEST (MatrixAccessor, NcolsNrows)
 {
     mtrx::Matrix<double> m (5, 3, 0);
@@ -392,7 +403,7 @@ TEST (MatrixComparison, EqualMatrices)
         {3, 4}
     };
 
-    EXPECT_TRUE (m1.equal (m2));
+    EXPECT_TRUE (m1 == m2);
 }
 
 TEST (MatrixComparison, DifferentMatrices)
@@ -407,7 +418,7 @@ TEST (MatrixComparison, DifferentMatrices)
         {3, 5}
     };
 
-    EXPECT_FALSE (m1.equal (m2));
+    EXPECT_FALSE (m1 == m2);
 }
 
 TEST (MatrixComparison, DifferentSizes)
@@ -422,5 +433,89 @@ TEST (MatrixComparison, DifferentSizes)
         {4, 5, 6}
     };
 
-    EXPECT_FALSE (m1.equal (m2));
+    EXPECT_FALSE (m1 == m2);
+}
+
+// exceptions:
+
+TEST (MatrixExceptions, ZeroCols)
+{
+    EXPECT_THROW (
+        mtrx::Matrix<double> m (0, 2),
+        std::invalid_argument );
+}
+
+TEST (MatrixExceptions, ZeroRows)
+{
+    EXPECT_THROW (
+        mtrx::Matrix<double> m (2, 0),
+        std::invalid_argument );
+}
+
+TEST (MatrixExceptions, OutOfRangeRow)
+{
+    mtrx::Matrix<double> m (2, 2, 0.0);
+    EXPECT_THROW ((void)m[2][0], std::out_of_range);
+}
+
+TEST (MatrixExceptions, OutOfRangeCol)
+{
+    mtrx::Matrix<double> m (2, 2, 0.0);
+    EXPECT_THROW ((void)m[0][2], std::out_of_range);
+}
+
+TEST (MatrixExceptions, ConstOutOfRangeRow)
+{
+    const mtrx::Matrix<double> m = {{1, 2}, {3, 4}};
+    EXPECT_THROW ((void)m[5][0], std::out_of_range);
+}
+
+TEST (MatrixExceptions, DetNonSquare)
+{
+    mtrx::Matrix<double> m = {{1, 2, 3}, {4, 5, 6}};
+    EXPECT_THROW ((void)m.det(), std::invalid_argument);
+}
+
+TEST (MatrixExceptions, TraceNonSquare)
+{
+    mtrx::Matrix<double> m = {{1, 2, 3}, {4, 5, 6}};
+    EXPECT_THROW ((void)m.trace(), std::invalid_argument);
+}
+
+// at()
+
+TEST (MatrixAt, ReadAccess)
+{
+    mtrx::Matrix<double> m = {{1, 2}, {3, 4}};
+
+    EXPECT_EQ (m.at (0, 0), 1);
+    EXPECT_EQ (m.at (0, 1), 2);
+    EXPECT_EQ (m.at (1, 0), 3);
+    EXPECT_EQ (m.at (1, 1), 4);
+}
+
+TEST (MatrixAt, WriteAccess)
+{
+    mtrx::Matrix<double> m (2, 2, 0.0);
+
+    m.at (0, 1) = 42;
+    m.at (1, 0) = 99;
+
+    EXPECT_EQ (m.at (0, 1), 42);
+    EXPECT_EQ (m.at (1, 0), 99);
+}
+
+TEST (MatrixAt, ConstAccess)
+{
+    const mtrx::Matrix<double> m = {{5, 6}, {7, 8}};
+
+    EXPECT_EQ (m.at (1, 1), 8);
+}
+
+TEST (MatrixAt, OutOfRange)
+{
+    mtrx::Matrix<double> m (2, 2, 0.0);
+
+    EXPECT_THROW ((void)m.at (2, 0), std::out_of_range);
+    EXPECT_THROW ((void)m.at (0, 2), std::out_of_range);
 }

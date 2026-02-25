@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <iomanip>
 #include <limits>
+#include <utility>
 
 namespace mtrx
 {
@@ -40,74 +41,63 @@ namespace mtrx
         size_t num_cols_;
         size_t num_rows_;
 
-        void copy_matrix (const Matrix& other)
-        {
-            num_cols_ = other.num_cols_;
-            num_rows_ = other.num_rows_;
-
-            MemoryGuard guard(num_cols_ * num_rows_);
-
-            std::copy (other.data_, other.data_ + (num_cols_ * num_rows_), guard.get());
-
-            data_ = guard.release();
-        }
-
-        static void check_column_bounds (size_t col, size_t row_size)
-        {
-            if (col >= row_size)
-                throw std::out_of_range("Column index out of range");
-        }
-
+        template <typename U>
         struct ProxyRow
         {
-            T* row_;
+            U* row_;
             size_t row_size_;
 
-            ProxyRow(T* r_ptr, size_t r_size) : row_(r_ptr), row_size_(r_size) {}
+            ProxyRow(U* r_ptr, size_t r_size) : row_(r_ptr), row_size_(r_size) {}
 
-            const T& operator[](size_t c) const
+            U& operator[](size_t c)
             {
-                check_column_bounds (c, row_size_);
+                if (c >= row_size_)
+                    throw std::out_of_range("Column index out of range");
+
                 return row_[c];
             }
 
-            T& operator[](size_t c)
+            const U& operator[](size_t c) const
             {
-                check_column_bounds (c, row_size_);
-                return row_[c];
-            }
-        };
+                if (c >= row_size_)
+                    throw std::out_of_range("Column index out of range");
 
-        struct ConstProxyRow
-        {
-            const T* row_;
-            size_t row_size_;
-
-            ConstProxyRow(const T* r_ptr, size_t r_size) : row_(r_ptr), row_size_(r_size) {}
-
-            const T& operator[](size_t c) const
-            {
-                check_column_bounds (c, row_size_);
                 return row_[c];
             }
         };
 
     public:
 
-        ProxyRow operator[](size_t r)
+        ProxyRow<T> operator[](size_t r)
         {
             if (r >= num_rows_)
                 throw std::out_of_range("Row index out of range");
 
-            return ProxyRow (data_ + r * num_cols_, num_cols_);
+            return ProxyRow<T> (data_ + r * num_cols_, num_cols_);
         }
 
-        ConstProxyRow operator[](size_t r) const
+        ProxyRow<const T> operator[](size_t r) const
         {
             if (r >= num_rows_)
                 throw std::out_of_range("Row index out of range");
 
-            return ConstProxyRow (data_ + r * num_cols_, num_cols_);
+            return ProxyRow<const T> (data_ + r * num_cols_, num_cols_);
+        }
+
+        T& at (size_t r, size_t c)
+        {
+            if (r >= num_rows_ || c >= num_cols_)
+                throw std::out_of_range("Matrix index out of range");
+
+            return data_[r * num_cols_ + c];
+        }
+
+        const T& at (size_t r, size_t c) const
+        {
+            if (r >= num_rows_ || c >= num_cols_)
+                throw std::out_of_range("Matrix index out of range");
+
+            return data_[r * num_cols_ + c];
         }
 
         Matrix(size_t cols, size_t rows, const T& val = T{})
@@ -170,15 +160,22 @@ namespace mtrx
             data_ = guard.release();
         }
 
-        Matrix(const Matrix& other) : data_(nullptr)
+        Matrix(const Matrix& other)
+              : data_(nullptr),
+                num_cols_(other.num_cols_),
+                num_rows_(other.num_rows_)
         {
-            copy_matrix (other);
+            MemoryGuard guard(num_cols_ * num_rows_);
+
+            std::copy (other.data_, other.data_ + (num_cols_ * num_rows_), guard.get());
+
+            data_ = guard.release();
         }
 
         Matrix(Matrix&& other) noexcept
-              : data_(other.data_),
-                num_cols_(other.num_cols_),
-                num_rows_(other.num_rows_) { other.data_ = nullptr; }
+              : data_(std::exchange(other.data_, nullptr)),
+                num_cols_(std::exchange(other.num_cols_, 0)),
+                num_rows_(std::exchange(other.num_rows_, 0)) {}
 
         Matrix& operator= (const Matrix& other)
         {
@@ -198,12 +195,9 @@ namespace mtrx
         {
             if (this != &other)
             {
-                delete[] data_;
-                data_ = other.data_;
-                num_cols_ = other.num_cols_;
-                num_rows_ = other.num_rows_;
-
-                other.data_ = nullptr;
+                std::swap (data_, other.data_);
+                std::swap (num_cols_, other.num_cols_);
+                std::swap (num_rows_, other.num_rows_);
             }
             return *this;
         }
@@ -217,10 +211,6 @@ namespace mtrx
 
         size_t ncols() const noexcept { return num_cols_; }
         size_t nrows() const noexcept { return num_rows_; }
-
-        bool is_valid() const { return data_ != nullptr &&
-                                       num_cols_ > 0    &&
-                                       num_rows_ > 0; }
 
         void dump() const
         {
@@ -263,7 +253,7 @@ namespace mtrx
             return *this;
         }
 
-        bool equal (const Matrix& other) const
+        bool operator== (const Matrix& other) const
         {
             if (num_rows_ != other.num_rows_ ||
                 num_cols_ != other.num_cols_   )
@@ -291,7 +281,7 @@ namespace mtrx
         }
 
     private:
-        size_t find_main_row (const Matrix& mt, size_t col) const
+        static size_t find_main_row (const Matrix& mt, size_t col)
         {
             size_t max_row = col;
             auto max_data = std::abs (mt[col][col]);
@@ -309,18 +299,18 @@ namespace mtrx
             return max_row;
         }
 
-        bool is_degenerate (const Matrix& mt, size_t col) const
+        static bool is_degenerate (const Matrix& mt, size_t col)
         {
             return std::abs (mt[col][col]) < std::numeric_limits<T>::epsilon();
         }
 
-        void swap_rows (Matrix& mt, size_t r1, size_t r2) const
+        static void swap_rows (Matrix& mt, size_t r1, size_t r2)
         {
             for (size_t col = 0; col < mt.ncols(); ++col)
                 std::swap (mt[r1][col], mt[r2][col]);
         }
 
-        const T make_zeros_under_main_row (Matrix& mt, size_t main_row) const
+        static T make_zeros_under_main_row (Matrix& mt, size_t main_row)
         {
             const T main = mt[main_row][main_row];
 

@@ -2,62 +2,66 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ dev, main ]
   pull_request:
-  workflow_dispatch:
+    branches: [ dev, main ]
 
 jobs:
-  unit-tests:
+  ubuntu-debug:
+    name: Ubuntu (GCC Debug)
     runs-on: ubuntu-latest
-    container: archlinux:latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Arch dependencies
-        run: pacman -Syu --noconfirm && pacman -S --noconfirm cmake ninja gcc gtest
-
-      - name: Configure and Build Tests
+      - name: Install dependencies
         run: |
-          cmake -S . -B build/tests -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
-          cmake --build build/tests
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ libgtest-dev
+
+      - name: Configure
+        run: cmake -S . -B build/debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build/debug
 
       - name: Run Tests
-        run: cd build/tests && ctest --output-on-failure
+        run: ctest --test-dir build/debug --output-on-failure
 
-  debug-build:
+  ubuntu-sanitize:
+    name: Ubuntu (GCC + Sanitizers)
     runs-on: ubuntu-latest
-    container: archlinux:latest
-    needs: unit-tests
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Arch dependencies
-        run: pacman -Syu --noconfirm && pacman -S --noconfirm cmake ninja gcc gtest
-
-      - name: Debug with Sanitizers
+      - name: Install dependencies
         run: |
-          cmake -S . -B build/debug -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSANITIZE=ON -DBUILD_TESTS=ON
-          cmake --build build/debug
-          ./build/debug/matrix || echo "Debug run success"
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ libgtest-dev
 
-  release-build:
+      - name: Configure with sanitizers
+        run: cmake -S . -B build/sanitize -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON -DSANITIZE=ON
+
+      - name: Build
+        run: cmake --build build/sanitize
+
+      - name: Run Tests
+        run: ctest --test-dir build/sanitize --output-on-failure
+
+  ubuntu-release:
+    name: Ubuntu (GCC Release)
     runs-on: ubuntu-latest
-    container: archlinux:latest
-    needs: unit-tests
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Arch dependencies
-        run: pacman -Syu --noconfirm && pacman -S --noconfirm cmake ninja gcc
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++
 
       - name: Release build
         run: |
           cmake -S . -B build/release -G Ninja -DCMAKE_BUILD_TYPE=Release -DSANITIZE=OFF -DBUILD_TESTS=OFF
           cmake --build build/release
-          ./build/release/matrix || echo "Release run success"
