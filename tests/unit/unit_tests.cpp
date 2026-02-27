@@ -519,3 +519,155 @@ TEST (MatrixAt, OutOfRange)
     EXPECT_THROW ((void)m.at (2, 0), std::out_of_range);
     EXPECT_THROW ((void)m.at (0, 2), std::out_of_range);
 }
+
+// Matrix<int> tests:
+
+TEST (MatrixInt, SizeConstructor)
+{
+    mtrx::Matrix<int> m (3, 2, 7);
+
+    EXPECT_EQ (m.ncols(), 3);
+    EXPECT_EQ (m.nrows(), 2);
+
+    for (size_t i = 0; i < 2; ++i)
+        for (size_t j = 0; j < 3; ++j)
+            EXPECT_EQ (m[i][j], 7);
+}
+
+TEST (MatrixInt, InitializerList)
+{
+    mtrx::Matrix<int> m = {
+        {1, 2, 3},
+        {4, 5, 6}
+    };
+
+    EXPECT_EQ (m[0][0], 1);
+    EXPECT_EQ (m[1][2], 6);
+}
+
+TEST (MatrixInt, CopyConstructor)
+{
+    mtrx::Matrix<int> m1 = {{1, 2}, {3, 4}};
+    mtrx::Matrix<int> m2 (m1);
+
+    EXPECT_TRUE (m1 == m2);
+
+    m2[0][0] = 999;
+    EXPECT_EQ (m1[0][0], 1);
+}
+
+TEST (MatrixInt, MoveConstructor)
+{
+    mtrx::Matrix<int> m1 = {{1, 2}, {3, 4}};
+    mtrx::Matrix<int> m2 (std::move (m1));
+
+    EXPECT_EQ (m2[0][0], 1);
+    EXPECT_EQ (m2[1][1], 4);
+}
+
+TEST (MatrixInt, CopyAssignment)
+{
+    mtrx::Matrix<int> m1 = {{1, 2}, {3, 4}};
+    mtrx::Matrix<int> m2 = {{5, 6, 7}};
+
+    m2 = m1;
+
+    EXPECT_TRUE (m1 == m2);
+}
+
+TEST (MatrixInt, MoveAssignment)
+{
+    mtrx::Matrix<int> m1 = {{1, 2}, {3, 4}};
+    mtrx::Matrix<int> m2 = {{5, 6, 7}};
+
+    m2 = std::move (m1);
+
+    EXPECT_EQ (m2[1][1], 4);
+}
+
+TEST (MatrixInt, At)
+{
+    mtrx::Matrix<int> m = {{10, 20}, {30, 40}};
+
+    EXPECT_EQ (m.at (0, 1), 20);
+
+    m.at (1, 0) = 99;
+    EXPECT_EQ (m.at (1, 0), 99);
+}
+
+TEST (MatrixInt, Negate)
+{
+    mtrx::Matrix<int> m = {{1, -2}, {3, -4}};
+    m.negate();
+
+    EXPECT_EQ (m[0][0], -1);
+    EXPECT_EQ (m[0][1], 2);
+    EXPECT_EQ (m[1][0], -3);
+    EXPECT_EQ (m[1][1], 4);
+}
+
+TEST (MatrixInt, TransposeSquare)
+{
+    mtrx::Matrix<int> m = {{1, 2}, {3, 4}};
+    m.transpose();
+
+    EXPECT_EQ (m[0][1], 3);
+    EXPECT_EQ (m[1][0], 2);
+}
+
+TEST (MatrixInt, TransposeNonSquare)
+{
+    mtrx::Matrix<int> m = {{1, 2, 3}, {4, 5, 6}};
+    m.transpose();
+
+    EXPECT_EQ (m.ncols(), 2);
+    EXPECT_EQ (m.nrows(), 3);
+    EXPECT_EQ (m[0][1], 4);
+    EXPECT_EQ (m[2][0], 3);
+}
+
+TEST (MatrixInt, Trace)
+{
+    mtrx::Matrix<int> m = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+
+    EXPECT_EQ (m.trace(), 15);
+}
+
+TEST (MatrixInt, Comparison)
+{
+    mtrx::Matrix<int> m1 = {{1, 2}, {3, 4}};
+    mtrx::Matrix<int> m2 = {{1, 2}, {3, 4}};
+    mtrx::Matrix<int> m3 = {{1, 2}, {3, 5}};
+
+    EXPECT_TRUE (m1 == m2);
+    EXPECT_FALSE (m1 == m3);
+}
+
+TEST (MatrixInt, DetIdentity)
+{
+    mtrx::Matrix<int> m = {{1, 0}, {0, 1}};
+
+    EXPECT_EQ (m.det(), 1);
+}
+
+TEST (MatrixInt, DetDiagonal)
+{
+    mtrx::Matrix<int> m = {
+        {3, 0, 0},
+        {0, 4, 0},
+        {0, 0, 5}
+    };
+
+    EXPECT_EQ (m.det(), 60);
+}
+
+TEST (MatrixInt, DetSingular)
+{
+    mtrx::Matrix<int> m = {
+        {1, 2, 3},
+        {1, 2, 3},
+        {4, 5, 6}
+    };
+
+    EXPECT_EQ (m.det(), 0);
+}
