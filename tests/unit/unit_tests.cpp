@@ -3,6 +3,56 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include <stdexcept>
+#include <random>
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
+namespace
+{
+    // mixed relative/absolute tolerance for floating-point checks
+    double scaled_tol (double lhs, double rhs, double rel = 1e-9, double abs = 1e-9)
+    {
+        return std::max (abs, std::max (std::abs (lhs), std::abs (rhs)) * rel);
+    }
+
+    long long permutation_sign (const std::vector<int>& perm)
+    {
+        size_t inversion_count = 0;
+
+        for (size_t i = 0; i < perm.size(); ++i)
+            for (size_t j = i + 1; j < perm.size(); ++j)
+                if (perm[i] > perm[j])
+                    ++inversion_count;
+
+        return (inversion_count % 2 == 0) ? 1LL : -1LL;
+    }
+
+    // exact 5x5 determinant - leibniz formula
+    long long det_reference_5x5 (const mtrx::Matrix<int>& mt)
+    {
+        const size_t n = mt.nrows();
+        EXPECT_EQ (n, 5);
+        EXPECT_EQ (mt.ncols(), 5);
+
+        std::vector<int> perm (n);
+        for (size_t i = 0; i < n; ++i)
+            perm[i] = static_cast<int> (i);
+
+        long long det = 0;
+        do
+        {
+            long long term = permutation_sign (perm);
+            for (size_t row = 0; row < n; ++row)
+                term *= static_cast<long long> (mt[row][perm[row]]);
+
+            det += term;
+        }
+        while (std::next_permutation (perm.begin(), perm.end()));
+
+        return det;
+    }
+}
 
 TEST (MatrixConstructor, SizeConstructorWithValue)
 {
@@ -77,6 +127,33 @@ TEST (MatrixConstructor, IteratorConstructorWrongSize)
         mtrx::Matrix<double> m (2, 2, data.begin(), data.end()),
         std::invalid_argument
     );
+}
+
+TEST (MatrixConstructor, IteratorConstructorTooMany)
+{
+    std::vector<double> data = {1, 2, 3, 4, 5};
+
+    EXPECT_THROW (
+        mtrx::Matrix<double> m (2, 2, data.begin(), data.end()),
+        std::invalid_argument
+    );
+}
+
+TEST (MatrixConstructor, InitializerListUnequalRows)
+{
+    EXPECT_THROW (
+        (mtrx::Matrix<double> {{1, 2, 3}, {4, 5}}),
+        std::invalid_argument
+    );
+}
+
+TEST (MatrixConstructor, SingleElement)
+{
+    mtrx::Matrix<double> m = {{42}};
+
+    EXPECT_EQ (m.ncols(), 1);
+    EXPECT_EQ (m.nrows(), 1);
+    EXPECT_EQ (m[0][0], 42);
 }
 
 // big-5:
@@ -220,6 +297,25 @@ TEST (MatrixAccessor, ConstRowProxy)
     EXPECT_EQ (row[1], 2);
 }
 
+TEST (MatrixAccessor, BoundaryAccess)
+{
+    mtrx::Matrix<double> m = {
+        {1, 2, 3},
+        {4, 5, 6},
+        {7, 8, 9}
+    };
+
+    EXPECT_EQ (m[0][0], 1);
+    EXPECT_EQ (m[0][2], 3);
+    EXPECT_EQ (m[2][0], 7);
+    EXPECT_EQ (m[2][2], 9);
+
+    EXPECT_EQ (m.at (0, 0), 1);
+    EXPECT_EQ (m.at (0, 2), 3);
+    EXPECT_EQ (m.at (2, 0), 7);
+    EXPECT_EQ (m.at (2, 2), 9);
+}
+
 TEST (MatrixAccessor, NcolsNrows)
 {
     mtrx::Matrix<double> m (5, 3, 0);
@@ -238,6 +334,16 @@ TEST (MatrixAccessor, IsSquare)
 }
 
 // modifier:
+
+TEST (MatrixModifier, DoubleNegate)
+{
+    mtrx::Matrix<double> m = {{1, -2}, {3, -4}};
+    mtrx::Matrix<double> original (m);
+
+    m.negate().negate();
+
+    EXPECT_TRUE (m == original);
+}
 
 TEST (MatrixModifier, Negate)
 {
@@ -291,7 +397,127 @@ TEST (MatrixModifier, TransposeNonSquare)
     EXPECT_EQ (m[2][0], 3);
 }
 
+TEST (MatrixModifier, DoubleTranspose)
+{
+    mtrx::Matrix<double> m = {{1, 2, 3}, {4, 5, 6}};
+    mtrx::Matrix<double> original (m);
+
+    m.transpose().transpose();
+
+    EXPECT_TRUE (m == original);
+}
+
+TEST (MatrixModifier, Transpose1x1)
+{
+    mtrx::Matrix<double> m = {{7}};
+    m.transpose();
+
+    EXPECT_EQ (m[0][0], 7);
+    EXPECT_EQ (m.ncols(), 1);
+    EXPECT_EQ (m.nrows(), 1);
+}
+
 // determinant:
+
+TEST (MatrixDeterminant, Det1x1)
+{
+    mtrx::Matrix<double> m = {{5}};
+    EXPECT_NEAR (m.det(), 5.0, scaled_tol (m.det(), 5.0));
+}
+
+TEST (MatrixDeterminant, NeedsPivoting)
+{
+    mtrx::Matrix<double> m = {
+        {0, 1},
+        {1, 0}
+    };
+
+    EXPECT_NEAR (m.det(), -1.0, scaled_tol (m.det(), -1.0));
+}
+
+TEST (MatrixDeterminant, NeedsPivoting3x3)
+{
+    mtrx::Matrix<double> m = {
+        {0, 0, 1},
+        {0, 1, 0},
+        {1, 0, 0}
+    };
+
+    EXPECT_NEAR (m.det(), -1.0, scaled_tol (m.det(), -1.0));
+}
+
+TEST (MatrixDeterminant, Generic3x3)
+{
+    mtrx::Matrix<double> m = {
+        { 2,  3,  1},
+        { 1, -1,  2},
+        { 3,  2, -1}
+    };
+
+    EXPECT_NEAR (m.det(), 20.0, scaled_tol (m.det(), 20.0));
+}
+
+TEST (MatrixDeterminant, LargeRandom)
+{
+    constexpr size_t N = 10;
+    std::mt19937 gen(123);
+    std::uniform_real_distribution<double> small_dist(-3.0, 3.0);
+    std::uniform_real_distribution<double> diag_dist(1.0, 3.0);
+
+    // unit lower-triangular matrix => det(L) = 1
+    mtrx::Matrix<double> L (N, N, 0.0);
+    for (size_t i = 0; i < N; ++i)
+    {
+        L[i][i] = 1.0;
+        for (size_t j = 0; j < i; ++j)
+            L[i][j] = small_dist (gen);
+    }
+
+    // upper-triangular matrix => det(U) is product of diagonal
+    mtrx::Matrix<double> U (N, N, 0.0);
+    double expected_det = 1.0;
+    for (size_t i = 0; i < N; ++i)
+    {
+        U[i][i] = diag_dist (gen);
+        expected_det *= U[i][i];
+        for (size_t j = i + 1; j < N; ++j)
+            U[i][j] = small_dist (gen);
+    }
+
+    // det(L * U) = det(L) * det(U)
+    mtrx::Matrix<double> A (N, N, 0.0);
+    for (size_t i = 0; i < N; ++i)
+        for (size_t j = 0; j < N; ++j)
+            for (size_t k = 0; k < N; ++k)
+                A[i][j] = A[i][j] + L[i][k] * U[k][j];
+
+    EXPECT_NEAR (A.det(), expected_det, scaled_tol (A.det(), expected_det));
+}
+
+TEST (MatrixDeterminant, RandomTransposeInvariant)
+{
+    constexpr size_t N = 6;
+
+    // check: det(A) == det(A^T)
+    for (uint32_t seed = 1; seed <= 20; ++seed)
+    {
+        std::mt19937 gen(seed);
+        std::uniform_real_distribution<double> dist(-3.0, 3.0);
+
+        mtrx::Matrix<double> mt (N, N, 0.0);
+        for (size_t i = 0; i < N; ++i)
+            for (size_t j = 0; j < N; ++j)
+                mt[i][j] = dist (gen);
+
+        mtrx::Matrix<double> transposed (mt);
+        transposed.transpose();
+
+        const double det_mt = mt.det();
+        const double det_transposed = transposed.det();
+
+        EXPECT_NEAR (det_mt, det_transposed, scaled_tol (det_mt, det_transposed, 1e-7, 1e-7));
+    }
+}
 
 TEST (MatrixDeterminant, Identity2x2)
 {
@@ -300,7 +526,7 @@ TEST (MatrixDeterminant, Identity2x2)
         {0, 1}
     };
 
-    EXPECT_EQ (m.det(), 1);
+    EXPECT_NEAR (m.det(), 1.0, scaled_tol (m.det(), 1.0));
 }
 
 TEST (MatrixDeterminant, Simple2x2)
@@ -310,7 +536,7 @@ TEST (MatrixDeterminant, Simple2x2)
         {3, 4}
     };
 
-    EXPECT_EQ (m.det(), -2);
+    EXPECT_NEAR (m.det(), -2.0, scaled_tol (m.det(), -2.0));
 }
 
 TEST (MatrixDeterminant, Diagonal3x3)
@@ -321,7 +547,7 @@ TEST (MatrixDeterminant, Diagonal3x3)
         {0, 0, 4}
     };
 
-    EXPECT_EQ (m.det(), 24);
+    EXPECT_NEAR (m.det(), 24.0, scaled_tol (m.det(), 24.0));
 }
 
 TEST (MatrixDeterminant, Singular3x3)
@@ -332,7 +558,7 @@ TEST (MatrixDeterminant, Singular3x3)
         {4, 5, 6}
     };
 
-    EXPECT_EQ (m.det(), 0);
+    EXPECT_NEAR (m.det(), 0.0, scaled_tol (m.det(), 0.0));
 }
 
 TEST (MatrixDeterminant, Identity5x5)
@@ -341,7 +567,7 @@ TEST (MatrixDeterminant, Identity5x5)
     for (size_t i = 0; i < 5; ++i)
         m[i][i] = 1;
 
-    EXPECT_EQ (m.det(), 1);
+    EXPECT_NEAR (m.det(), 1.0, scaled_tol (m.det(), 1.0));
 }
 
 TEST (MatrixDeterminant, UpperTriangular4x4)
@@ -353,7 +579,7 @@ TEST (MatrixDeterminant, UpperTriangular4x4)
         {0, 0, 0, 5}
     };
 
-    EXPECT_EQ (m.det(), 120);
+    EXPECT_NEAR (m.det(), 120.0, scaled_tol (m.det(), 120.0));
 }
 
 // trace:
@@ -480,6 +706,19 @@ TEST (MatrixExceptions, TraceNonSquare)
 {
     mtrx::Matrix<double> m = {{1, 2, 3}, {4, 5, 6}};
     EXPECT_THROW ((void)m.trace(), std::invalid_argument);
+}
+
+TEST (MatrixExceptions, ConstOutOfRangeCol)
+{
+    const mtrx::Matrix<double> m = {{1, 2}, {3, 4}};
+    EXPECT_THROW ((void)m[0][5], std::out_of_range);
+}
+
+TEST (MatrixExceptions, ConstAtOutOfRange)
+{
+    const mtrx::Matrix<double> m = {{1, 2}, {3, 4}};
+    EXPECT_THROW ((void)m.at (2, 0), std::out_of_range);
+    EXPECT_THROW ((void)m.at (0, 2), std::out_of_range);
 }
 
 // at()
@@ -643,6 +882,12 @@ TEST (MatrixInt, Comparison)
     EXPECT_FALSE (m1 == m3);
 }
 
+TEST (MatrixInt, Det1x1)
+{
+    mtrx::Matrix<int> m = {{-7}};
+    EXPECT_EQ (m.det(), -7);
+}
+
 TEST (MatrixInt, DetIdentity)
 {
     mtrx::Matrix<int> m = {{1, 0}, {0, 1}};
@@ -670,4 +915,181 @@ TEST (MatrixInt, DetSingular)
     };
 
     EXPECT_EQ (m.det(), 0);
+}
+
+TEST (MatrixInt, Det2x2)
+{
+    mtrx::Matrix<int> m = {{3, 8}, {4, 6}};
+    EXPECT_EQ (m.det(), -14);
+}
+
+TEST (MatrixInt, DetNeedsPivoting)
+{
+    mtrx::Matrix<int> m = {
+        {0, 1, 2},
+        {1, 0, 3},
+        {4, 0, 5}
+    };
+
+    EXPECT_EQ (m.det(), 7);
+}
+
+TEST (MatrixInt, DetNegativeElements)
+{
+    mtrx::Matrix<int> m = {
+        {-2,  3,  1},
+        { 5, -4, -2},
+        { 1,  6, -3}
+    };
+
+    EXPECT_EQ (m.det(), 25);
+}
+
+TEST (MatrixInt, DetRegression6x6)
+{
+    mtrx::Matrix<int> m = {
+        { 5,  6,  6,  5,  5,  2},
+        {-6,  4,  6,  3, -1,  6},
+        { 2,  5,  1, -3,  4, -3},
+        { 2, -2, -6,  1, -4,  6},
+        { 6, -3, -4,  2,  6,  6},
+        { 5, -5,  4, -6, -3,  3}
+    };
+
+    EXPECT_EQ (m.det(), -473035);
+}
+
+TEST (MatrixInt, DetLargeRandom)
+{
+    constexpr size_t N = 10;
+    std::mt19937 gen(42);
+    std::uniform_int_distribution<int> small_dist(-3, 3);
+    std::uniform_int_distribution<int> diag_dist(1, 3);
+
+    mtrx::Matrix<int> L (N, N, 0);
+    for (size_t i = 0; i < N; ++i)
+    {
+        L[i][i] = 1;
+        for (size_t j = 0; j < i; ++j)
+            L[i][j] = small_dist (gen);
+    }
+
+    mtrx::Matrix<int> U (N, N, 0);
+    int expected_det = 1;
+    for (size_t i = 0; i < N; ++i)
+    {
+        U[i][i] = diag_dist (gen);
+        expected_det *= U[i][i];
+        for (size_t j = i + 1; j < N; ++j)
+            U[i][j] = small_dist (gen);
+    }
+
+    mtrx::Matrix<int> A (N, N, 0);
+    for (size_t i = 0; i < N; ++i)
+        for (size_t j = 0; j < N; ++j)
+            for (size_t k = 0; k < N; ++k)
+                A[i][j] = A[i][j] + L[i][k] * U[k][j];
+
+    EXPECT_EQ (A.det(), expected_det);
+}
+
+TEST (MatrixInt, DetLargeRandomBatch)
+{
+    constexpr size_t N = 8;
+
+    // same known-det construction, but across many seeds
+    for (uint32_t seed = 1; seed <= 40; ++seed)
+    {
+        std::mt19937 gen(seed);
+        std::uniform_int_distribution<int> small_dist(-3, 3);
+        std::uniform_int_distribution<int> diag_dist(1, 3);
+
+        mtrx::Matrix<int> L (N, N, 0);
+        for (size_t i = 0; i < N; ++i)
+        {
+            L[i][i] = 1;
+            for (size_t j = 0; j < i; ++j)
+                L[i][j] = small_dist (gen);
+        }
+
+        mtrx::Matrix<int> U (N, N, 0);
+        int expected_det = 1;
+        for (size_t i = 0; i < N; ++i)
+        {
+            U[i][i] = diag_dist (gen);
+            expected_det *= U[i][i];
+
+            for (size_t j = i + 1; j < N; ++j)
+                U[i][j] = small_dist (gen);
+        }
+
+        mtrx::Matrix<int> A (N, N, 0);
+        for (size_t i = 0; i < N; ++i)
+            for (size_t j = 0; j < N; ++j)
+                for (size_t k = 0; k < N; ++k)
+                    A[i][j] += L[i][k] * U[k][j];
+
+        EXPECT_EQ (A.det(), expected_det);
+    }
+}
+
+TEST (MatrixInt, DetSwapRowsFlipsSign)
+{
+    mtrx::Matrix<int> m = {
+        {2, 1, 3},
+        {1, 0, 4},
+        {5, 2, 1}
+    };
+
+    mtrx::Matrix<int> swapped (m);
+    for (size_t col = 0; col < swapped.ncols(); ++col)
+        std::swap (swapped[0][col], swapped[2][col]);
+
+    EXPECT_EQ (m.det(), 9);
+    EXPECT_EQ (swapped.det(), -9);
+}
+
+TEST (MatrixInt, DetTransposeInvariantRandom)
+{
+    constexpr size_t N = 5;
+
+    for (uint32_t seed = 100; seed <= 140; ++seed)
+    {
+        std::mt19937 gen(seed);
+        std::uniform_int_distribution<int> dist(-3, 3);
+
+        mtrx::Matrix<int> mt (N, N, 0);
+        for (size_t i = 0; i < N; ++i)
+            for (size_t j = 0; j < N; ++j)
+                mt[i][j] = dist (gen);
+
+        mtrx::Matrix<int> transposed (mt);
+        transposed.transpose();
+
+        EXPECT_EQ (mt.det(), transposed.det());
+    }
+}
+
+TEST (MatrixInt, DetAgainstReference5x5Random)
+{
+    constexpr size_t N = 5;
+
+    // compare bareiss result against independent exact oracle
+    for (uint32_t seed = 200; seed <= 240; ++seed)
+    {
+        std::mt19937 gen(seed);
+        std::uniform_int_distribution<int> dist(-4, 4);
+
+        mtrx::Matrix<int> mt (N, N, 0);
+        for (size_t i = 0; i < N; ++i)
+            for (size_t j = 0; j < N; ++j)
+                mt[i][j] = dist (gen);
+
+        const long long reference_det = det_reference_5x5 (mt);
+
+        ASSERT_GE (reference_det, static_cast<long long> (std::numeric_limits<int>::min()));
+        ASSERT_LE (reference_det, static_cast<long long> (std::numeric_limits<int>::max()));
+
+        EXPECT_EQ (mt.det(), static_cast<int> (reference_det));
+    }
 }
