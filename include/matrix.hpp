@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <limits>
 #include <utility>
+#include <type_traits>
+#include <vector>
 
 namespace mtrx
 {
@@ -325,12 +327,8 @@ namespace mtrx
             return main;
         }
 
-    public:
-        T det() const
+        T det_gauss() const
         {
-            if (!is_square())
-                throw std::invalid_argument("Determinant can be found only for square matrix");
-
             Matrix copy_mt(*this);
             T det{1};
 
@@ -347,12 +345,85 @@ namespace mtrx
                 }
 
                 if (is_degenerate (copy_mt, row))
-                return T{0};
+                    return T{0};
 
                 det *= make_zeros_under_main_row (copy_mt, row);
             }
 
             return (sign_count % 2 == 0) ? det : -det;
+        }
+
+        T det_bareiss() const
+        {
+            size_t n = num_rows_;
+
+            // long long to avoid intermediate overflow
+            std::vector<long long> mt(n * n);
+
+            for (size_t i = 0; i < n * n; ++i)
+                mt[i] = static_cast<long long>(data_[i]);
+
+            size_t sign_count = 0;
+            long long prev_pivot = 1;
+
+            for (size_t i = 0; i + 1 < n; ++i)
+            {
+                // partial pivoting
+                size_t max_row = i;
+                long long max_val = std::abs (mt[i * n + i]);
+
+                for (size_t row = i + 1; row < n; ++row)
+                {
+                    long long abs_val = std::abs (mt[row * n + i]);
+                    if (abs_val > max_val)
+                    {
+                        max_row = row;
+                        max_val = abs_val;
+                    }
+                }
+
+                if (max_row != i)
+                {
+                    for (size_t col = 0; col < n; ++col)
+                        std::swap (mt[i * n + col], mt[max_row * n + col]);
+
+                    ++sign_count;
+                }
+
+                if (mt[i * n + i] == 0)
+                    return T{0};
+
+                for (size_t j = i + 1; j < n; ++j)
+                    for (size_t k = i + 1; k < n; ++k)
+                        mt[j * n + k] = (mt[j * n + k] * mt[i * n + i]
+                                       - mt[j * n + i] * mt[i * n + k])
+                                       / prev_pivot;
+
+                prev_pivot = mt[i * n + i];
+            }
+
+            long long result = mt[n * n - 1];
+
+            return static_cast<T>((sign_count % 2 == 0) ? result : -result);
+        }
+
+    public:
+        T det() const
+        {
+            if (!is_square())
+                throw std::invalid_argument("Determinant can be found only for square matrix");
+
+            if constexpr (std::is_integral_v<T>)
+            {
+                static_assert (std::is_signed_v<T>,
+                               "det() for integral Matrix requires signed T");
+
+                return det_bareiss();
+            }
+            else
+            {
+                return det_gauss();
+            }
         }
     };
 }
