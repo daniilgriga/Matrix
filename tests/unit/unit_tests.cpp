@@ -882,6 +882,120 @@ TEST (MatrixInt, Comparison)
     EXPECT_FALSE (m1 == m3);
 }
 
+// multiply:
+
+TEST (MatrixMultiply, Basic2x2)
+{
+    mtrx::Matrix<int> a = {{1, 2}, {3, 4}};
+    mtrx::Matrix<int> b = {{5, 6}, {7, 8}};
+
+    auto c = a * b;
+
+    EXPECT_EQ (c.nrows(), 2);
+    EXPECT_EQ (c.ncols(), 2);
+    EXPECT_EQ (c[0][0], 19);
+    EXPECT_EQ (c[0][1], 22);
+    EXPECT_EQ (c[1][0], 43);
+    EXPECT_EQ (c[1][1], 50);
+}
+
+TEST (MatrixMultiply, NonSquare)
+{
+    mtrx::Matrix<int> a = {{1, 2, 3}, {4, 5, 6}};
+    mtrx::Matrix<int> b = {{7, 8}, {9, 10}, {11, 12}};
+
+    auto c = a * b;
+
+    EXPECT_EQ (c.nrows(), 2);
+    EXPECT_EQ (c.ncols(), 2);
+    EXPECT_EQ (c[0][0], 58);
+    EXPECT_EQ (c[0][1], 64);
+    EXPECT_EQ (c[1][0], 139);
+    EXPECT_EQ (c[1][1], 154);
+}
+
+TEST (MatrixMultiply, ResultDimensions)
+{
+    mtrx::Matrix<int> a (4, 3, 1);  // 3x4
+    mtrx::Matrix<int> b (2, 4, 1);  // 4x2
+
+    auto c = a * b;
+
+    EXPECT_EQ (c.nrows(), 3);
+    EXPECT_EQ (c.ncols(), 2);
+}
+
+TEST (MatrixMultiply, IdentityRight)
+{
+    mtrx::Matrix<int> a = {{1, 2, 3}, {4, 5, 6}};
+
+    mtrx::Matrix<int> I (3, 3, 0);
+    for (size_t i = 0; i < 3; ++i)
+        I[i][i] = 1;
+
+    EXPECT_TRUE ((a * I) == a);
+}
+
+TEST (MatrixMultiply, IdentityLeft)
+{
+    mtrx::Matrix<int> a = {{1, 2, 3}, {4, 5, 6}};
+
+    mtrx::Matrix<int> I (2, 2, 0);
+    for (size_t i = 0; i < 2; ++i)
+        I[i][i] = 1;
+
+    EXPECT_TRUE ((I * a) == a);
+}
+
+TEST (MatrixMultiply, IncompatibleDimensions)
+{
+    mtrx::Matrix<int> a = {{1, 2, 3}, {4, 5, 6}};   // 2x3
+    mtrx::Matrix<int> b = {{1, 2}, {3, 4}};         // 2x2
+
+    EXPECT_THROW ((void)(a * b), std::invalid_argument);
+}
+
+TEST (MatrixMultiply, Associativity)
+{
+    // (A * B) * C == A * (B * C) for integer matrices
+    std::mt19937 gen (77);
+    std::uniform_int_distribution<int> dist (-5, 5);
+
+    mtrx::Matrix<int> A (3, 2, 0);
+    mtrx::Matrix<int> B (4, 3, 0);
+    mtrx::Matrix<int> C (2, 4, 0);
+
+    for (size_t i = 0; i < A.nrows(); ++i)
+        for (size_t j = 0; j < A.ncols(); ++j)
+            A[i][j] = dist (gen);
+
+    for (size_t i = 0; i < B.nrows(); ++i)
+        for (size_t j = 0; j < B.ncols(); ++j)
+            B[i][j] = dist (gen);
+
+    for (size_t i = 0; i < C.nrows(); ++i)
+        for (size_t j = 0; j < C.ncols(); ++j)
+            C[i][j] = dist (gen);
+
+    auto lhs = (A * B) * C;
+    auto rhs = A * (B * C);
+
+    EXPECT_TRUE (lhs == rhs);
+}
+
+TEST (MatrixMultiply, DoubleBasic)
+{
+    mtrx::Matrix<double> a = {{1.5, 2.0}, {0.5, 3.0}};
+    mtrx::Matrix<double> b = {{2.0, 0.0}, {1.0, 4.0}};
+
+    auto c = a * b;
+
+    EXPECT_NEAR (c[0][0], 5.0,  scaled_tol (c[0][0], 5.0));
+    EXPECT_NEAR (c[0][1], 8.0,  scaled_tol (c[0][1], 8.0));
+    EXPECT_NEAR (c[1][0], 4.0,  scaled_tol (c[1][0], 4.0));
+    EXPECT_NEAR (c[1][1], 12.0, scaled_tol (c[1][1], 12.0));
+}
+
 TEST (MatrixInt, Det1x1)
 {
     mtrx::Matrix<int> m = {{-7}};
