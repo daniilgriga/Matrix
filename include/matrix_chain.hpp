@@ -1,5 +1,10 @@
 #pragma once
 
+#include <cstdint>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
 #include "matrix.hpp"
 
 namespace mtrx
