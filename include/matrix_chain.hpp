@@ -37,8 +37,28 @@ namespace mtrx
             return multiply_helper (matrices, i, k) * multiply_helper (matrices, k + 1, j);
         }
 
+        // post-order traversal of split tree
+        void order_helper (size_t i, size_t j, std::vector<size_t>& order) const
+        {
+            if (i == j)
+                return;
+
+            size_t k = split_[i][j];
+            order_helper (i, k, order);
+            order_helper (k + 1, j, order);
+            order.push_back (k);
+        }
+
     public:
         MatrixChain() : solved_(false) {}
+
+        // ctor from dims array [p0, p1, ..., pn]
+        explicit MatrixChain (const std::vector<size_t>& dims)
+            : dims_(dims), solved_(false)
+        {
+            if (dims_.size() < 2)
+                throw std::invalid_argument ("Need at least 2 dimensions for 1 matrix");
+        }
 
         void add (size_t rows, size_t cols)
         {
@@ -113,6 +133,17 @@ namespace mtrx
                 throw std::logic_error ("Call solve() before optimal_brackets()");
 
             return brackets_helper (0, size() - 1);
+        }
+
+        std::vector<size_t> optimal_order() const
+        {
+            if (!solved_)
+                throw std::logic_error ("Call solve() before optimal_order()");
+
+            std::vector<size_t> order;
+            order_helper (0, size() - 1, order);
+
+            return order;
         }
 
         template<typename T>
