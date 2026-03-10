@@ -66,6 +66,10 @@ namespace proc
         uint64_t naive = chain.naive_cost();
         uint64_t optimal = chain.solve();
 
-        output << static_cast<double> (naive) / static_cast<double> (optimal) << "\n";
+        // single matrix: no operations, speedup is 1
+        if (optimal == 0)
+            output << 1 << "\n";
+        else
+            output << static_cast<double> (naive) / static_cast<double> (optimal) << "\n";
     }
 }
