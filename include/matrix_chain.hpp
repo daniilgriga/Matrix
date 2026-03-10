@@ -47,10 +47,17 @@ namespace mtrx
         {
             if (dims_.size() < 2)
                 throw std::invalid_argument ("Need at least 2 dimensions for 1 matrix");
+
+            for (size_t d : dims_)
+                if (d == 0)
+                    throw std::invalid_argument ("Dimensions must be positive");
         }
 
         void add (size_t rows, size_t cols)
         {
+            if (rows == 0 || cols == 0)
+                throw std::invalid_argument ("Matrix dimensions must be positive");
+
             if (!dims_.empty() && dims_.back() != rows)
                 throw std::invalid_argument ("Incompatible matrix dimensions in chain");
 
@@ -68,10 +75,13 @@ namespace mtrx
 
         uint64_t solve()
         {
+            size_t n = size();
+            if (n == 0)
+                throw std::logic_error ("Cannot solve empty matrix chain");
+
             if (solved_)
                 return cost_[0][size() - 1];
 
-            size_t n = size();
             cost_.assign  (n, std::vector<uint64_t> (n, 0));
             split_.assign (n, std::vector<size_t>   (n, 0));
             order_.assign (n, std::vector<std::vector<size_t>> (n));

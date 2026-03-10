@@ -52,7 +52,7 @@ namespace proc
                 throw std::runtime_error ("Failed to read dimension");
 
         mtrx::MatrixChain chain (dims);
-        chain.solve();
+        uint64_t optimal = chain.solve();
 
         auto order = chain.optimal_order();
         for (size_t i = 0; i < order.size(); ++i)
@@ -64,12 +64,10 @@ namespace proc
         output << "\n";
 
         uint64_t naive = chain.naive_cost();
-        uint64_t optimal = chain.solve();
+        double ratio = 1.0;
+        if (optimal > 0)
+            ratio = static_cast<double> (naive) / static_cast<double> (optimal);
 
-        // single matrix: no operations, speedup is 1
-        if (optimal == 0)
-            output << 1 << "\n";
-        else
-            output << static_cast<double> (naive) / static_cast<double> (optimal) << "\n";
+        output << ratio << "\n";
     }
 }

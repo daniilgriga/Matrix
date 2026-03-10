@@ -1,6 +1,8 @@
 #include "matrix_chain.hpp"
+#include "processor.hpp"
 
 #include <gtest/gtest.h>
+#include <sstream>
 #include <stdexcept>
 #include <vector>
 
@@ -39,6 +41,14 @@ TEST (MatrixChainAdd, IncompatibleDimensions)
     EXPECT_THROW (chain.add (5, 4), std::invalid_argument);
 }
 
+TEST (MatrixChainAdd, ZeroDimensions)
+{
+    mtrx::MatrixChain chain;
+
+    EXPECT_THROW (chain.add (0, 3), std::invalid_argument);
+    EXPECT_THROW (chain.add (3, 0), std::invalid_argument);
+}
+
 // solve():
 
 TEST (MatrixChainSolve, TwoMatrices)
@@ -48,6 +58,23 @@ TEST (MatrixChainSolve, TwoMatrices)
     chain.add (30, 5);
 
     EXPECT_EQ (chain.solve(), 1500u);
+}
+
+TEST (MatrixChainSolve, EmptyChainThrows)
+{
+    mtrx::MatrixChain chain;
+
+    EXPECT_THROW (chain.solve(), std::logic_error);
+}
+
+TEST (MatrixChainSolve, SingleMatrix)
+{
+    mtrx::MatrixChain chain;
+    chain.add (10, 20);
+
+    EXPECT_EQ (chain.solve(), 0u);
+    EXPECT_EQ (chain.naive_cost(), 0u);
+    EXPECT_TRUE (chain.optimal_order().empty());
 }
 
 TEST (MatrixChainSolve, ThreeMatricesOptimal)
@@ -246,6 +273,13 @@ TEST (MatrixChainDims, TooFewDimensions)
     EXPECT_THROW (mtrx::MatrixChain chain (dims), std::invalid_argument);
 }
 
+TEST (MatrixChainDims, ZeroDimensionInVector)
+{
+    std::vector<size_t> dims = {10, 0, 5};
+
+    EXPECT_THROW (mtrx::MatrixChain chain (dims), std::invalid_argument);
+}
+
 // optimal_order():
 
 TEST (MatrixChainOrder, TwoMatrices)
@@ -294,4 +328,15 @@ TEST (MatrixChainOrder, WithoutSolveThrows)
     chain.add (3, 4);
 
     EXPECT_THROW (chain.optimal_order(), std::logic_error);
+}
+
+// processor chain:
+
+TEST (ProcessChain, SingleMatrixNoNaN)
+{
+    std::istringstream input ("2 10 20");
+    std::ostringstream output;
+
+    EXPECT_NO_THROW (proc::process_chain (input, output));
+    EXPECT_EQ (output.str(), "\n1\n");
 }
