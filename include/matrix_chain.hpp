@@ -38,18 +38,6 @@ namespace mtrx
             return multiply_helper (matrices, i, k) * multiply_helper (matrices, k + 1, j);
         }
 
-        // post-order traversal of split tree
-        void order_helper (size_t i, size_t j, std::vector<size_t>& order) const
-        {
-            if (i == j)
-                return;
-
-            size_t k = split_[i][j];
-            order_helper (i, k, order);
-            order_helper (k + 1, j, order);
-            order.push_back (k);
-        }
-
     public:
         MatrixChain() : solved_(false) {}
 
