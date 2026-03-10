@@ -4,6 +4,7 @@ def mcm_solve(dims):
     n = len(dims) - 1
     cost = [[0] * n for _ in range(n)]
     split = [[0] * n for _ in range(n)]
+    order = [[[] for _ in range(n)] for _ in range(n)]
 
     for length in range(2, n + 1):
         for i in range(n - length + 1):
@@ -11,11 +12,13 @@ def mcm_solve(dims):
             cost[i][j] = float('inf')
             for k in range(i, j):
                 c = cost[i][k] + cost[k+1][j] + dims[i] * dims[k+1] * dims[j+1]
-                if c < cost[i][j]:
+                candidate = order[i][k] + order[k+1][j] + [k]
+                if c < cost[i][j] or (c == cost[i][j] and candidate < order[i][j]):
                     cost[i][j] = c
                     split[i][j] = k
+                    order[i][j] = candidate
 
-    return cost[0][n-1], split
+    return cost[0][n-1], order[0][n-1]
 
 def naive_cost(dims):
     n = len(dims) - 1
@@ -28,20 +31,9 @@ def naive_cost(dims):
         rows = dims[0]
     return cost
 
-def order_helper(split, i, j, order):
-    if i == j:
-        return
-    k = split[i][j]
-    order_helper(split, i, k, order)
-    order_helper(split, k+1, j, order)
-    order.append(k)
-
 def write_test(test_num, dims, description):
     n = len(dims) - 1
-    optimal, split = mcm_solve(dims)
-
-    order = []
-    order_helper(split, 0, n - 1, order)
+    optimal, order = mcm_solve(dims)
 
     naive = naive_cost(dims)
     speedup = naive / optimal if optimal > 0 else 1.0
@@ -62,31 +54,15 @@ def write_test(test_num, dims, description):
 
 if __name__ == '__main__':
     random.seed(42)
-    test_num = 1
+    # tests 001-010 are hand-written, start from 011
+    test_num = 11
 
     print('=' * 60)
-    print('  Generating MatrixChain E2E Tests')
+    print('  Generating MatrixChain E2E Tests (auto, 11+)')
     print('=' * 60)
 
-    test_num = write_test(test_num, [30, 35, 15, 5, 10], 'professor example')
-
-    test_num = write_test(test_num, [10, 30, 5], 'trivial 2 matrices')
-
-    test_num = write_test(test_num, [10, 100, 5, 50], '3 matrices left-assoc')
-
-    test_num = write_test(test_num, [1, 10, 100, 1], '3 matrices right-assoc')
-
-    test_num = write_test(test_num, [10, 10, 10, 10, 10], '4 uniform')
-
-    test_num = write_test(test_num, [5, 10, 3, 12, 5, 50], '5 matrices mixed')
-    test_num = write_test(test_num, [30, 35, 15, 5, 10, 20, 25], '6 matrices CLRS')
-    test_num = write_test(test_num, [100, 200, 5, 300, 10], '4 matrices big speedup')
-    test_num = write_test(test_num, [40, 20, 30, 10, 30, 50, 15, 25], '7 matrices')
-    test_num = write_test(test_num, [10, 20, 50, 1, 100, 5, 30, 80, 10], '8 matrices bottleneck')
-
-    test_num = write_test(test_num, [7, 13, 5, 30, 10, 4, 20, 8, 50, 6], '9 matrices varied')
-
-    test_num = write_test(test_num, [5, 100, 3, 200, 2, 150, 4, 80, 6, 120, 5], '10 alternating')
+    dims = [random.randint(5, 100) for _ in range(12)]
+    test_num = write_test(test_num, dims, '11 random')
 
     dims = [random.randint(5, 100) for _ in range(13)]
     test_num = write_test(test_num, dims, '12 random')
@@ -127,5 +103,5 @@ if __name__ == '__main__':
     test_num = write_test(test_num, dims, '50 matrices')
 
     print('=' * 60)
-    print(f'Generated {test_num - 1} test pairs!')
+    print(f'Generated {test_num - 11} auto test pairs (011-{test_num-1:03})!')
     print('=' * 60)
