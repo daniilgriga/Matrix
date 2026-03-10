@@ -5,10 +5,12 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 if [ $# -eq 0 ]; then
     echo -e "${RED}ERROR: Please provide path to binary${NC}"
     echo "Usage: $0 <path_to_binary>"
-    echo "Example: $0 ../../driver"
+    echo "Example: $0 build/src/matrix"
     exit 1
 fi
 
@@ -24,9 +26,9 @@ fi
 echo "Running end-to-end tests for Matrix Determinant"
 echo "========================================"
 
-for dat_file in *.dat; do
-    test_id="${dat_file%.dat}"
-    ans_file="${test_id}.ans"
+for dat_file in "$SCRIPT_DIR"/*.dat; do
+    test_id="$(basename "${dat_file%.dat}")"
+    ans_file="$SCRIPT_DIR/${test_id}.ans"
 
     if [ ! -f "$ans_file" ]; then
         echo -e "${YELLOW}WARNING: $ans_file not found, skipping...${NC}"

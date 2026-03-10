@@ -1,13 +1,18 @@
 #include "processor.hpp"
 
+#include <cstring>
 #include <iostream>
 #include <exception>
 
-int main ()
+int main (int argc, char* argv[])
 {
     try
     {
-        proc::process_det();
+        // usage: matrix [--chain]
+        if (argc > 1 && std::strcmp (argv[1], "--chain") == 0)
+            proc::process_chain();
+        else
+            proc::process_det();
 
         return 0;
     }

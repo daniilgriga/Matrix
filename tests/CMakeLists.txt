@@ -1,4 +1,8 @@
-add_executable (matrix_tests unit/unit_tests.cpp)
+add_executable (matrix_tests
+    unit/matrix_tests.cpp
+    unit/chain_tests.cpp
+)
+
 target_include_directories (matrix_tests PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
 target_compile_options (matrix_tests PRIVATE

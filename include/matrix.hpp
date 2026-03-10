@@ -204,6 +204,21 @@ namespace mtrx
             return *this;
         }
 
+        Matrix operator* (const Matrix& rhs) const
+        {
+            if (num_cols_ != rhs.nrows())
+                throw std::invalid_argument ("Matrices have incompatible dimensions for multiplication");
+
+            Matrix result(rhs.num_cols_, num_rows_, T{0});
+
+            for (size_t i = 0; i < num_rows_; ++i)
+                for (size_t j = 0; j < rhs.num_cols_; ++j)
+                    for (size_t k = 0; k < num_cols_; ++k)
+                        result[i][j] += (*this)[i][k] * rhs[k][j];
+
+            return result;
+        }
+
         ~Matrix()
         {
             delete[] data_;
