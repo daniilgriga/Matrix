@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include <stdexcept>
+#include <vector>
 
 // add() and size():
 
@@ -212,4 +213,85 @@ TEST (MatrixChainMultiply, WrongNumberOfMatrices)
 
     std::vector<mtrx::Matrix<int>> mats = {a};
     EXPECT_THROW (chain.multiply (mats), std::invalid_argument);
+}
+
+// dims ctor:
+
+TEST (MatrixChainDims, BasicConstruction)
+{
+    std::vector<size_t> dims = {10, 100, 5, 50};
+    mtrx::MatrixChain chain (dims);
+
+    EXPECT_EQ (chain.size(), 3);
+}
+
+TEST (MatrixChainDims, SolveMatchesAdd)
+{
+    std::vector<size_t> dims = {10, 30, 5, 60, 10};
+    mtrx::MatrixChain chain (dims);
+
+    mtrx::MatrixChain chain2;
+    chain2.add (10, 30);
+    chain2.add (30, 5);
+    chain2.add (5, 60);
+    chain2.add (60, 10);
+
+    EXPECT_EQ (chain.solve(), chain2.solve());
+}
+
+TEST (MatrixChainDims, TooFewDimensions)
+{
+    std::vector<size_t> dims = {10};
+
+    EXPECT_THROW (mtrx::MatrixChain chain (dims), std::invalid_argument);
+}
+
+// optimal_order():
+
+TEST (MatrixChainOrder, TwoMatrices)
+{
+    mtrx::MatrixChain chain;
+    chain.add (10, 30);
+    chain.add (30, 5);
+    chain.solve();
+
+    std::vector<size_t> expected = {0};
+
+    EXPECT_EQ (chain.optimal_order(), expected);
+}
+
+TEST (MatrixChainOrder, ThreeMatricesLeftAssoc)
+{
+
+    mtrx::MatrixChain chain;
+    chain.add (10, 100);
+    chain.add (100, 5);
+    chain.add (5, 50);
+    chain.solve();
+
+    std::vector<size_t> expected = {0, 1};
+
+    EXPECT_EQ (chain.optimal_order(), expected);
+}
+
+TEST (MatrixChainOrder, FourMatrices)
+{
+    std::vector<size_t> dims = {30, 35, 15, 5, 10};
+    mtrx::MatrixChain chain (dims);
+    chain.solve();
+
+    std::vector<size_t> order = chain.optimal_order();
+    std::vector<size_t> expected = {1, 0, 2};
+
+    EXPECT_EQ (order.size(), 3);
+    EXPECT_EQ (chain.optimal_order(), expected);
+}
+
+TEST (MatrixChainOrder, WithoutSolveThrows)
+{
+    mtrx::MatrixChain chain;
+    chain.add (2, 3);
+    chain.add (3, 4);
+
+    EXPECT_THROW (chain.optimal_order(), std::logic_error);
 }
