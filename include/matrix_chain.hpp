@@ -16,6 +16,7 @@ namespace mtrx
         std::vector<size_t> dims_;
         std::vector<std::vector<uint64_t>> cost_;
         std::vector<std::vector<size_t>> split_;
+        std::vector<std::vector<std::vector<size_t>>> order_;
         bool solved_;
 
         std::string brackets_helper (size_t i, size_t j) const
@@ -85,6 +86,7 @@ namespace mtrx
             size_t n = size();
             cost_.assign  (n, std::vector<uint64_t> (n, 0));
             split_.assign (n, std::vector<size_t>   (n, 0));
+            order_.assign (n, std::vector<std::vector<size_t>> (n));
 
             for (size_t len = 2; len <= n; ++len)
             {
@@ -97,10 +99,19 @@ namespace mtrx
                     {
                         uint64_t c = cost_[i][k] + cost_[k + 1][j]
                                    + dims_[i] * dims_[k + 1] * dims_[j + 1];
-                        if (c < cost_[i][j])
+
+                        // build candidate order: left + right + k
+                        std::vector<size_t> candidate;
+                        candidate.reserve (order_[i][k].size() + order_[k + 1][j].size() + 1);
+                        candidate.insert (candidate.end(), order_[i][k].begin(), order_[i][k].end());
+                        candidate.insert (candidate.end(), order_[k + 1][j].begin(), order_[k + 1][j].end());
+                        candidate.push_back (k);
+
+                        if (c < cost_[i][j] || (c == cost_[i][j] && candidate < order_[i][j]))
                         {
                             cost_[i][j] = c;
                             split_[i][j] = k;
+                            order_[i][j] = std::move (candidate);
                         }
                     }
                 }
@@ -140,10 +151,7 @@ namespace mtrx
             if (!solved_)
                 throw std::logic_error ("Call solve() before optimal_order()");
 
-            std::vector<size_t> order;
-            order_helper (0, size() - 1, order);
-
-            return order;
+            return order_[0][size() - 1];
         }
 
         template<typename T>
