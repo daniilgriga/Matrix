@@ -242,7 +242,8 @@ TEST (MatrixBig5, SelfAssignment)
         {3, 4}
     };
 
-    m = m;
+    auto& ref = m;
+    m = ref;
 
     EXPECT_EQ (m.ncols(), 2);
     EXPECT_EQ (m.nrows(), 2);

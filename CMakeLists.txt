@@ -9,14 +9,19 @@ option (SANITIZE "Enable Address and Undefined sanitizers" OFF)
 option (BUILD_TESTS "Build tests" ON)
 
 if(MSVC)
-    set (COMMON_COMPILE_OPTIONS /W4 /WX)
+    set (COMMON_COMPILE_OPTIONS /W4)
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        list (APPEND COMMON_COMPILE_OPTIONS /WX)
+    endif()
 else()
     set (COMMON_COMPILE_OPTIONS
         -Wall
         -Wextra
         -Wpedantic
-        -Werror
     )
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        list (APPEND COMMON_COMPILE_OPTIONS -Werror)
+    endif()
 endif()
 
 if(SANITIZE AND NOT MSVC)
