@@ -35,7 +35,7 @@ for dat_file in "$SCRIPT_DIR"/*.dat; do
         continue
     fi
 
-    actual_output=$("$PROGRAM_BIN" --chain < "$dat_file" 2>/dev/null)
+    actual_output=$("$PROGRAM_BIN" < "$dat_file" 2>/dev/null)
     expected_output=$(cat "$ans_file")
 
     if [ "$actual_output" == "$expected_output" ]; then
