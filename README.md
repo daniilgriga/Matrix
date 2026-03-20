@@ -8,7 +8,6 @@
 
 - [How to Install](#how-to-install)
 - [How to Build](#how-to-build)
-- [How to Run](#how-to-run)
 - [Level 1 — Determinant](#level-1--determinant)
 - [Level 2 — Matrix Chain Multiplication](#level-2--matrix-chain-multiplication)
 - [Unit-tests](#unit-tests)
@@ -31,16 +30,6 @@ cmake --build build/debug
 # Release version:
 cmake -S . -B build/release -G Ninja -DCMAKE_BUILD_TYPE=Release -DSANITIZE=OFF -DBUILD_TESTS=OFF
 cmake --build build/release
-```
-
-## How to Run
-
-```bash
-# default mode: determinant
-./build/debug/src/matrix
-
-# chain mode:
-./build/debug/src/matrix --chain
 ```
 
 ## Level 1 — Determinant
@@ -70,7 +59,7 @@ The program accepts input data through standard input (`stdin`) in the following
 ### Example of Valid Input
 
 ```bash
-echo "3 2 3 3 -4 2 5 0 -5 5" | ./build/debug/src/matrix
+echo "3 2 3 3 -4 2 5 0 -5 5" | ./build/debug/src/matrix_det
 ```
 
 This represents the 3x3 matrix:
@@ -113,7 +102,7 @@ Complexity:
 ### Example
 
 ```bash
-echo "5 30 35 15 5 10" | ./build/debug/src/matrix --chain
+echo "5 30 35 15 5 10" | ./build/debug/src/matrix_chain
 1 0 2
 2.08
 ```
@@ -135,8 +124,7 @@ cmake --build build/tests
 ### How to Run
 
 ```bash
-cd build/tests
-ctest --output-on-failure
+ctest --test-dir build/tests --output-on-failure
 ```
 
 ## End-to-End Tests
@@ -151,11 +139,11 @@ cmake --build build/debug
 Run determinant e2e tests:
 
 ```bash
-./tests/end2end/det/run_e2e.sh ./build/debug/src/matrix
+./tests/end2end/det/run_e2e.sh ./build/debug/src/matrix_det
 ```
 
 Run matrix-chain e2e tests:
 
 ```bash
-./tests/end2end/chain/run_e2e.sh ./build/debug/src/matrix
+./tests/end2end/chain/run_e2e.sh ./build/debug/src/matrix_chain
 ```
